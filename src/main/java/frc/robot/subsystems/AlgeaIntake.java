@@ -58,20 +58,34 @@ public class AlgeaIntake extends SubsystemBase {
 
     angleMotor = new SparkMax(8, MotorType.kBrushless);
     angleConfig = new SparkMaxConfig();
+
+    //General config of the angle motor 
     angleConfig
       .inverted(false)
       .idleMode(IdleMode.kBrake)
       .closedLoopRampRate(0.5)
       .openLoopRampRate(0.5);
 
+      //Getting bore encoder
     angleConfig.alternateEncoder
       .inverted(false);
 
+
+      //Angle motor max limit
+    angleConfig.softLimit
+      .forwardSoftLimitEnabled(true)
+      .forwardSoftLimit(1)
+      .reverseSoftLimitEnabled(true)
+      .forwardSoftLimit(1);
+
+      //PID configuration
     angleConfig.closedLoop
+      //bore
       .feedbackSensor(FeedbackSensor.kAlternateOrExternalEncoder)
+      //will be tuned soon
       .pid(0, 0, 0)
       //May change soon, it will set the speed
-      .outputRange(0.1, 0.5, ClosedLoopSlot.kSlot1);
+      .outputRange(0.1, 0.7, ClosedLoopSlot.kSlot1);
       
     angleMotor.configure(angleConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
@@ -88,7 +102,7 @@ public class AlgeaIntake extends SubsystemBase {
     angle_Controller.setReference(
       rotation.getDegrees(), 
       ControlType.kPosition,ClosedLoopSlot.kSlot1,armFeedforward.calculate(rotation.getRadians(), 1,1)
-      );
+    );
   }
 
   public void SetManualAlgeaAngle(double power) {
