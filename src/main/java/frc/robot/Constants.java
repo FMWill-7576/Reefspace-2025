@@ -48,4 +48,38 @@ public final class Constants
     public static final double RIGHT_X_DEADBAND = 0.1;
     public static final double TURN_CONSTANT    = 6;
   }
+
+  public static class ElevatorConstants {
+    public static int elevatorMotorID;
+
+    public static double kMinElevatorHeight;
+    public static double kMaxElevatorHeight;
+    public static double kStartingHeightSim;
+    
+
+
+    public static double kElevatorkS;
+    public static double kElevatorkG;
+    public static double kElevatorkV;
+    public static double kElevatorkA;
+
+    public static double kCarriageMass;
+
+    public static int kElevatorCurrentLimit;
+    public static double kElevatorRampRate;
+
+    public static double kElevatorKp;
+    public static double kElevatorKi;
+    public static double kElevatorKd;
+
+    public static double kMaxVelocity;
+    public static double kMaxAcceleration;
+
+
+    public static double kElevatorDrumRadius;
+    public static double kElevatorGearing;
+
+
+
+  }
 }
