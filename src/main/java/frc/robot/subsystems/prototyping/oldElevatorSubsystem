@@ -2,7 +2,9 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems;
+
+/*
+package frc.robot.subsystems.prototyping;
 
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
@@ -56,7 +58,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.RobotMath.Elevator;
 
-public class ElevatorSubsystem extends SubsystemBase
+public class oldElevatorSubsystem extends SubsystemBase
 {
 
   // This gearbox represents a gearbox containing 1 Neo
@@ -97,9 +99,6 @@ public class ElevatorSubsystem extends SubsystemBase
               },
               this));
   private final SparkMaxSim               m_motorSim   = new SparkMaxSim(m_motor, m_elevatorGearbox);
-
-  private final Alert            m_laserCanFailure      = new Alert("LaserCAN failed to configure.",
-                                                                    AlertType.kError);
   private final DigitalInput     m_limitSwitchLow       = new DigitalInput(9);
   // Simulation classes help us simulate what's going on, including gravity.
   private final ElevatorSim m_elevatorSim =
@@ -127,7 +126,7 @@ public class ElevatorSubsystem extends SubsystemBase
   /**
    * Subsystem constructor.
    */
-  public ElevatorSubsystem()
+  public oldElevatorSubsystem()
   {
     SparkMaxConfig config = new SparkMaxConfig();
     config
@@ -189,8 +188,7 @@ public class ElevatorSubsystem extends SubsystemBase
       measurement.distance_mm = (int) (Math.floor(Meters.of(m_elevatorSim.getPositionMeters()).in(Millimeters)) -
                                        ElevatorConstants.kLaserCANOffset.in(Millimeters));
       // Update simulation distance field.
-      m_elevatorLaserCanSim.setMeasurementFullSim(measurement);
-
+  
       m_encoder.setPosition(Elevator.convertDistanceToRotations(Millimeters.of(
                                         m_elevatorLaserCanSim.getMeasurement().distance_mm + ElevatorConstants.kLaserCANOffset.in(Millimeters)))
                                     .in(Rotations));
@@ -343,3 +341,5 @@ public class ElevatorSubsystem extends SubsystemBase
 
 
 }
+
+*/
