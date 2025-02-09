@@ -2,3 +2,4 @@
 This program includes Pathplanner, YAGSL, Choreo, and more later...
 
 Big shoutout to the YAGSL team for helping create our primary swerve system 💖
+Also thanks to the 3481 for their help with the elevator system.
