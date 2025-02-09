@@ -32,6 +32,8 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.MutAngle;
@@ -166,8 +168,11 @@ public class ElevatorSubsystem extends SubsystemBase
         .closedLoop
         .feedbackSensor(FeedbackSensor.kAlternateOrExternalEncoder)
         .outputRange(-1, 1);
-    config.encoder
+    config.alternateEncoder
         .countsPerRevolution(8192);
+    config.softLimit
+      .reverseSoftLimitEnabled(true)
+      .reverseSoftLimit(0);
 
     m_motor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -203,20 +208,6 @@ public class ElevatorSubsystem extends SubsystemBase
     // SimBattery estimates loaded battery voltages
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(m_elevatorSim.getCurrentDrawAmps()));
-
-    // Update lasercan sim.
-    /*
-    m_elevatorLaserCanSim.setMeasurementFullSim(new Measurement(
-        LASERCAN_STATUS_VALID_MEASUREMENT,
-        (int) (Math.floor(Meters.of(m_elevatorSim.getPositionMeters()).in(Millimeters)) +
-               ElevatorConstants.kLaserCANOffset.in(Millimeters)),
-        0,
-        true,
-        m_laserCanTimingBudget.asMilliseconds(),
-        m_laserCanROI
-    ));
-    */
-
     // Update elevator visualization with position
     ElevatorConstants.kElevatorTower.setLength(getLinearPosition().in(Meters));
     ElevatorConstants.kElevatorCarriage.setPosition(ArmConstants.kArmLength, getLinearPosition().in(Meters));
@@ -247,6 +238,15 @@ public class ElevatorSubsystem extends SubsystemBase
   {
     double voltsOut = MathUtil.clamp(
         m_controller.calculate(getHeightMeters(), goal) +
+        m_feedforward.calculateWithVelocities(getVelocityMetersPerSecond(),
+                                              m_controller.getSetpoint().velocity), -7, 7);
+    m_motor.setVoltage(voltsOut);
+  }
+
+  public void reachHoldGoal()
+  {
+    double voltsOut = MathUtil.clamp(
+        m_controller.calculate(getHeightMeters(), lastestGoal) +
         m_feedforward.calculateWithVelocities(getVelocityMetersPerSecond(),
                                               m_controller.getSetpoint().velocity), -7, 7);
     m_motor.setVoltage(voltsOut);
@@ -343,8 +343,8 @@ public class ElevatorSubsystem extends SubsystemBase
    */
   public Command setGoal(double goal)
   {
-    return new InstantCommand(() -> lastestGoal = goal, this);
-    //return run(() -> reachGoal(goal));
+    //return new InstantCommand(() -> lastestGoal = goal, this);
+    return run(() -> {lastestGoal = goal;this.reachGoal(goal);});
   }
 
   /**
@@ -385,6 +385,11 @@ public class ElevatorSubsystem extends SubsystemBase
     m_motor.set(0.0);
   }
 
+  public Command holdPosition()
+  {
+    return run(()-> reachHoldGoal());
+  }
+
   /**
    * Update telemetry, including the mechanism visualization.
    */
@@ -397,5 +402,6 @@ public class ElevatorSubsystem extends SubsystemBase
   @Override
   public void periodic()
   {
+    updateTelemetry();
   }
 }
