@@ -1,58 +1,78 @@
 package frc.robot.subsystems.elevator;
 
-/**
- * Elevator constants
- * 
- * @author Dhyan Soni
- * @author Andrew Ge
- */
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
+import frc.robot.subsystems.arm.ArmConstants;
 
-import edu.wpi.first.math.util.Units;
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Second;
+
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.Units.*;
 
 public class ElevatorConstants {
-    public static class ElevatorSpecs {
-        public static final double gearing = 6.0;
-        public static final double carriageMassKg = 12;
-        public static final double drumRadiusMeters = Units.inchesToMeters(2);
-        public static final double minHeightMeters = 0;
-        public static final double maxHeightMeters = Units.feetToMeters(6); // remeasure maxV and A
-        // public static final boolean simulateGravity = true;
-        public static final double startingHeightMeters = 0;
+        public static final int kMotorPort = 0;
+        public static final int kEncoderAChannel = 0;
+        public static final int kEncoderBChannel = 1;
+        public static final int kJoystickPort = 0;
 
-        public static final double baseHeight = Units.feetToMeters(3.25);
+        public static final MechanismRoot2d kElevatorCarriage;
+        public static final MechanismLigament2d kElevatorTower;
 
-        public static int[] motorIds = { 1, 2 };
-        public static int stallLimit = 30;
-        public static int freeLimit = 50;
+        public static final double kElevatorKp = 2.0;
+        public static final double kElevatorKi = 0;
+        public static final double kElevatorKd = 0;
 
-        public static int zeroOffset = 0;
-    }
+        public static final double kElevatorkS = 0.01964; // volts (V)
+        public static final double kElevatorkV = 3.07; // volt per velocity (V/(m/s))
+        public static final double kElevatorkA = 0.41; // volt per acceleration (V/(m/s²))
+        public static final double kElevatorkG = 2.28; // volts (V)
 
-    public static class ElevatorControl {
-        public static final double kPSim = 0.02;
-        public static final double kDSim = 0;
-        public static final double kSSim = 0;
-        public static final double kGSim = 2.2977;
-        public static final double kVSim = 2.35; // 12 - 2.3 / 4.139
-        public static final double kASim = 0;
-        public static final double maxV = 4.139;
-        public static final double maxA = 3.988; // change in velocity / seconds
-    }
+        public static final double kElevatorGearing = 10.0;
+        // lol
+        public static final double kElevatorDrumRadius = edu.wpi.first.math.util.Units.inchesToMeters(2.0);
+        public static final double kCarriageMass = 4.0; // kg
 
-    public enum ElevatorStates {
-        STOP,
-        L1,
-        L2,
-        L3,
-        L4,
-        MAX,
-        STOW
-    }
+        // Encoder is reset to measure 0 at the bottom, so minimum height is 0.
+        public static final Distance kLaserCANOffset = Inches.of(3);
+        public static final Distance kStartingHeightSim = Meters.of(0);
+        public static final Distance kMinElevatorHeight = Meters.of(0.0);
+        public static final Distance kMaxElevatorHeight = Meters.of(1.9);
 
-    public static class StateHeights {
-        public static final double l1Height = Units.inchesToMeters(18);
-        public static final double l2Height = Units.inchesToMeters(31.875);
-        public static final double l3Height = Units.inchesToMeters(47.625);
-        public static final double l4Height = Units.inchesToMeters(72);
-    }
+        public static double kElevatorRampRate = 0.1;
+        public static int kElevatorCurrentLimit = 40;
+        public static double kMaxVelocity = Meters.of(3).per(Second).in(MetersPerSecond);
+        public static double kMaxAcceleration = Meters.of(5).per(Second).per(Second).in(MetersPerSecondPerSecond);
+
+        public static final Mechanism2d sideRobotView = new Mechanism2d(ArmConstants.kArmLength * 2,
+                        ElevatorConstants.kMaxElevatorHeight.in(Meters));
+        static {
+                kElevatorCarriage = ElevatorConstants.sideRobotView.getRoot("ElevatorCarriage", ArmConstants.kArmLength,
+                                ElevatorConstants.kStartingHeightSim.in(Meters));
+                kElevatorTower = kElevatorCarriage.append(new MechanismLigament2d(
+                                "Elevator",
+                                ElevatorConstants.kStartingHeightSim.in(Meters),
+                                -90,
+                                6,
+                                new Color8Bit(Color.kRed)));
+        }
+
+        //ppublic static final Mechanism2d setpoint = new Mechanism2d(0.3, 0.1);
+
+        public static double[] elevatorStates = {
+                0, //min
+                0.2,
+                0.5,
+                1,
+                1.9, //max
+        };
+
 }

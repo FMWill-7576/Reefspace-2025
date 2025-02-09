@@ -40,12 +40,16 @@ import frc.robot.subsystems.swervedrive.Vision.Cameras;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.json.simple.parser.ParseException;
+import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
+
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
@@ -780,4 +784,20 @@ public class SwerveSubsystem extends SubsystemBase {
   public SwerveDrive getSwerveDrive() {
     return swerveDrive;
   }
+
+  /*
+   * Burda bizim customlar
+   */
+
+  public boolean IsSpeakerOk(PhotonCamera camera) {
+    List<PhotonPipelineResult> result = camera.getAllUnreadResults();
+    if (!result.isEmpty()) {
+      return true;
+    }
+    return false;
+  }
+
+  public Command goToTheBestAprilTag(){
+    return run(()->{}).until(null);
+   }
 }
