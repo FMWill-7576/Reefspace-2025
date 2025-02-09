@@ -162,8 +162,9 @@ public class RobotContainer {
     drivebase.setDefaultCommand(
         !RobotBase.isSimulation() ? driveFieldOrientedDirectAngleKeyboard : driveFieldOrientedAnglularVelocity);
 
-    // Elevator hold ez
-    elevator.setDefaultCommand(elevator.setAlternativeGoal());
+    // Elevator hold
+    //elevator.setDefaultCommand(elevator.setAlternativeGoal());
+    elevator.setDefaultCommand(elevator.holdPosition());
 
     if (Robot.isSimulation()) {
       driver1.back().onTrue(Commands.runOnce(() -> drivebase.resetOdometry(new Pose2d(3, 3, new Rotation2d()))));
@@ -180,8 +181,9 @@ public class RobotContainer {
       //driver1.button(2).whileTrue(elevator.setGoal(6));
       //driver1.button(2).whileTrue(arm.setGoal(45));
       //driver1.povUp().onTrue(elevator.setGoal(0.5).repeatedly().until(elevator.IsAtTheDesiredHeigh(1, 0.1)));
-      driver1.povDown().whileTrue(elevator.setGoal(0));
-      driver1.povLeft().whileTrue(elevator.setGoal(0.5));
+      driver1.a().onTrue(elevator.setGoal(0).repeatedly().until(elevator.IsAtTheDesiredHeigh(0, 0.1)));
+      driver1.y().onTrue(elevator.setGoal(1).repeatedly().until(elevator.IsAtTheDesiredHeigh(1, 0.1)));
+      driver1.b().onTrue(elevator.setGoal(1.5).repeatedly().until(elevator.IsAtTheDesiredHeigh(0.5, 0.1)));
       //driver1.button(3).whileTrue(elevator.setGoal(9));
       //driver1.button(3).whileTrue(arm.setGoal(90));
 
