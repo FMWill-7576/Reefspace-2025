@@ -85,7 +85,7 @@ public class ElevatorSubsystem extends SubsystemBase
           ElevatorConstants.kElevatorkV,
           ElevatorConstants.kElevatorkA);
   private final SparkMax        m_motor    = new SparkMax(50, MotorType.kBrushless);
-  private final RelativeEncoder m_encoder  = m_motor.getEncoder();
+  private final RelativeEncoder m_encoder  = m_motor.getAlternateEncoder();
   private final SparkMaxSim     m_motorSim = new SparkMaxSim(m_motor, m_elevatorGearbox);
 
   // Sensors
