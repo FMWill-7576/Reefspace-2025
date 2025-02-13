@@ -48,9 +48,9 @@ public class RobotContainer {
   final CommandPS5Controller driver1 = new CommandPS5Controller(0);
   final CommandPS5Controller driver2 = new CommandPS5Controller(1);
 
-  private final SwerveSubsystem drivebase = new SwerveSubsystem(
-      new File(Filesystem.getDeployDirectory(), "swerve/neo"));
-  // private final ElevatorHandler s_elevator = new ElevatorHandler();
+  //private final SwerveSubsystem drivebase = new SwerveSubsystem(
+    //  new File(Filesystem.getDeployDirectory(), "swerve/neo"));
+ 
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
 
   // Importing Auto's
@@ -61,59 +61,6 @@ public class RobotContainer {
   // Auto Chooser
   SendableChooser<Command> autoChooser = new SendableChooser<>();
 
-  /**
-   * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
-   */
-  SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-                                                                () -> driver1.getLeftY() * -1,
-                                                                () -> driver1.getLeftX() * -1)
-                                                            .withControllerRotationAxis(driver1::getRightX)
-                                                            .deadband(OperatorConstants.DEADBAND)
-                                                            .scaleTranslation(0.8)
-                                                            .allianceRelativeControl(true);
-
-  /**
-   * Clone's the angular velocity input stream and converts it to a fieldRelative input stream.
-   */
-  SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(driver1::getRightX,
-                                                                                             driver1::getRightY)
-                                                           .headingWhile(true);
-
-  /**
-   * Clone's the angular velocity input stream and converts it to a robotRelative input stream.
-   */
-  SwerveInputStream driveRobotOriented = driveAngularVelocity.copy().robotRelative(true)
-                                                             .allianceRelativeControl(false);
-
-  SwerveInputStream driveAngularVelocityKeyboard = SwerveInputStream.of(drivebase.getSwerveDrive(),
-                                                                        () -> -driver1.getLeftY(),
-                                                                        () -> -driver1.getLeftX())
-                                                                    .withControllerRotationAxis(() -> driver1.getRawAxis(
-                                                                        2))
-                                                                    .deadband(OperatorConstants.DEADBAND)
-                                                                    .scaleTranslation(0.8)
-                                                                    .allianceRelativeControl(true);
-  // Derive the heading axis with math!
-  SwerveInputStream driveDirectAngleKeyboard     = driveAngularVelocityKeyboard.copy()
-                                                                               .withControllerHeadingAxis(() ->
-                                                                                                              Math.sin(
-                                                                                                                  driver1.getRawAxis(
-                                                                                                                      2) *
-                                                                                                                  Math.PI) *
-                                                                                                              (Math.PI *
-                                                                                                               2),
-                                                                                                          () ->
-                                                                                                              Math.cos(
-                                                                                                                  driver1.getRawAxis(
-                                                                                                                      2) *
-                                                                                                                  Math.PI) *
-                                                                                                              (Math.PI *
-                                                                                                               2))
-                                                                               .headingWhile(true);
-
-  /**
-   * The container for the robot. Contains subsystems, OI devices, and commands.
-   */
   public RobotContainer() {
 
     // Configure the trigger bindings
@@ -122,6 +69,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("test", Commands.print("I EXIST"));
 
     // Autonomous Chooser (Searchs auto folder)
+    /*
     autoChooser.setDefaultOption("do nothing", drivebase.getAutonomousCommand("do nothing"));
     SmartDashboard.putData(autoChooser);
     if (listOfAutos != null) {
@@ -132,7 +80,9 @@ public class RobotContainer {
         }
       }
     }
+       */
   }
+
 
   /**
    * Use this method to define your trigger->command mappings. Triggers can be
@@ -148,19 +98,6 @@ public class RobotContainer {
    * Flight joysticks}.
    */
   private void configureBindings() {
-    Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
-    Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
-    Command driveRobotOrientedAngularVelocity  = drivebase.driveFieldOriented(driveRobotOriented);
-    Command driveSetpointGen = drivebase.driveWithSetpointGeneratorFieldRelative(
-        driveDirectAngle);
-    Command driveFieldOrientedDirectAngleKeyboard      = drivebase.driveFieldOriented(driveDirectAngleKeyboard);
-    Command driveFieldOrientedAnglularVelocityKeyboard = drivebase.driveFieldOriented(driveAngularVelocityKeyboard);
-    Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
-        driveDirectAngleKeyboard);
-
-    // (Condition) ? Return-On-True : Return-on-False
-    //drivebase.setDefaultCommand(
-    //    !RobotBase.isSimulation() ? driveFieldOrientedDirectAngleKeyboard : driveFieldOrientedAnglularVelocity);
 
     // Elevator hold
     //elevator.setDefaultCommand(elevator.setAlternativeGoal());
@@ -181,9 +118,9 @@ public class RobotContainer {
       //driver1.button(2).whileTrue(elevator.setGoal(6));
       //driver1.button(2).whileTrue(arm.setGoal(45));
       //driver1.povUp().onTrue(elevator.setGoal(0.5).repeatedly().until(elevator.IsAtTheDesiredHeigh(1, 0.1)));
-      driver1.cross().onTrue(elevator.setGoal(0).repeatedly().until(elevator.IsAtTheDesiredHeigh(0, 0.1)));
-      driver1.triangle().onTrue(elevator.setGoal(1).repeatedly().until(elevator.IsAtTheDesiredHeigh(1, 0.1)));
-      driver1.circle().onTrue(elevator.setGoal(0.4).repeatedly().until(elevator.IsAtTheDesiredHeigh(0.5, 0.1)));
+      //driver1.cross().onTrue(elevator.setGoal(0).repeatedly().until(elevator.IsAtTheDesiredHeigh(0, 0.1)));
+      //driver1.triangle().onTrue(elevator.setGoal(1).repeatedly().until(elevator.IsAtTheDesiredHeigh(1, 0.1)));
+      //driver1.circle().onTrue(elevator.setGoal(0.4).repeatedly().until(elevator.IsAtTheDesiredHeigh(0.5, 0.1)));
       //driver1.button(3).whileTrue(elevator.setGoal(9));
       //driver1.button(3).whileTrue(arm.setGoal(90));
 
@@ -196,7 +133,7 @@ public class RobotContainer {
       //driver1.button(6).whileTrue(elevator.setGoal(4));
       // m_driverController.button(6).whileTrue(setElevArm(10, 70));
 
-      elevator.atHeight(1.9, 0.1).whileTrue(Commands.print("I AM ALIVE, YAAA HAAAAA"));
+      //elevator.atHeight(1.9, 0.1).whileTrue(Commands.print("I AM ALIVE, YAAA HAAAAA"));
     }
   }
 
@@ -226,9 +163,5 @@ public class RobotContainer {
 
   public void setDriveMode() {
     configureBindings();
-  }
-
-  public void setMotorBrake(boolean brake) {
-    drivebase.setMotorBrake(brake);
   }
 }
