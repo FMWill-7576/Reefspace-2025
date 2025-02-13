@@ -19,7 +19,8 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.Units.*;
 
 public class ElevatorConstants {
-        public static final int kMotorPort = 0;
+        public static final int kMotorPort1 = 21;
+        public static final int kMotorPort2 = 22;
         public static final int kEncoderAChannel = 0;
         public static final int kEncoderBChannel = 1;
         public static final int kJoystickPort = 0;

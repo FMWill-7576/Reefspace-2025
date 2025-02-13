@@ -64,12 +64,14 @@ public class AngleSubsystem  extends SubsystemBase{
             .velocityFF(1.0/5767, ClosedLoopSlot.kSlot1)
             .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
 
-        /*
+        
         angleMotorConfig.softLimit
             .reverseSoftLimitEnabled(true)
-            .reverseSoftLimit(10)
-            .
-        */
+            .reverseSoftLimit(0)
+            .forwardSoftLimitEnabled(true)
+            //Forward limit !!
+            .forwardSoftLimit(300);
+        
         
         angleMotor.configure(angleMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);   
         // Initialize dashboard values
@@ -91,7 +93,7 @@ public class AngleSubsystem  extends SubsystemBase{
 
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("Actual Position", encoder.getPosition());
-        SmartDashboard.putNumber("Actual Velocity", encoder.getVelocity());
+        SmartDashboard.putNumber("Arm Position", encoder.getPosition());
+        SmartDashboard.putNumber("Arm Velocity", encoder.getVelocity());
     }
 }

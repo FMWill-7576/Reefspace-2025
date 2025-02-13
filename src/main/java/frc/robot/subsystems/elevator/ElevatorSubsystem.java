@@ -86,9 +86,11 @@ public class ElevatorSubsystem extends SubsystemBase
           ElevatorConstants.kElevatorkG,
           ElevatorConstants.kElevatorkV,
           ElevatorConstants.kElevatorkA);
-  private final SparkMax        m_motor    = new SparkMax(50, MotorType.kBrushless);
-  private final RelativeEncoder m_encoder  = m_motor.getAlternateEncoder();
-  private final SparkMaxSim     m_motorSim = new SparkMaxSim(m_motor, m_elevatorGearbox);
+  private final SparkMax        m_motor1    = new SparkMax(ElevatorConstants.kMotorPort1, MotorType.kBrushless);
+  private final RelativeEncoder m_encoder  = m_motor1.getAlternateEncoder();
+  private final SparkMax        m_motor2    = new SparkMax(ElevatorConstants.kMotorPort2, MotorType.kBrushless);
+  
+  private final SparkMaxSim     m_motor1Sim = new SparkMaxSim(m_motor1, m_elevatorGearbox);
 
   // Sensors
   /*
@@ -140,7 +142,7 @@ public class ElevatorSubsystem extends SubsystemBase
                                   Seconds.of(10)),
           new SysIdRoutine.Mechanism(
               // Tell SysId how to plumb the driving voltage to the motor(s).
-              m_motor::setVoltage,
+              m_motor1::setVoltage,
               // Tell SysId how to record a frame of data for each motor on the mechanism being
               // characterized.
               log -> {
@@ -148,7 +150,7 @@ public class ElevatorSubsystem extends SubsystemBase
                 log.motor("elevator")
                    .voltage(
                        m_appliedVoltage.mut_replace(
-                           m_motor.getAppliedOutput() * RobotController.getBatteryVoltage(), Volts))
+                           m_motor1.getAppliedOutput() * RobotController.getBatteryVoltage(), Volts))
                    .linearPosition(m_distance.mut_replace(getHeightMeters(),
                                                           Meters)) // Records Height in Meters via SysIdRoutineLog.linearPosition
                    .linearVelocity(m_velocity.mut_replace(getVelocityMetersPerSecond(),
@@ -161,20 +163,26 @@ public class ElevatorSubsystem extends SubsystemBase
    */
   public ElevatorSubsystem()
   {
-    SparkMaxConfig config = new SparkMaxConfig();
-    config
+    SparkMaxConfig config1 = new SparkMaxConfig();
+    SparkMaxConfig config2 = new SparkMaxConfig();
+
+    config1
+        .inverted(true)
         .smartCurrentLimit(ElevatorConstants.kElevatorCurrentLimit)
         .closedLoopRampRate(ElevatorConstants.kElevatorRampRate)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kAlternateOrExternalEncoder)
         .outputRange(-1, 1);
-    config.alternateEncoder
+    config1.alternateEncoder
         .countsPerRevolution(8192);
-    config.softLimit
+    config1.softLimit
       .reverseSoftLimitEnabled(true)
       .reverseSoftLimit(0);
 
-    m_motor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    m_motor1.configure(config1, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+
+    config2.follow(21);
+    m_motor2.configure(config2, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
 
     // Publish Mechanism2d to SmartDashboard
     // To view the Elevator visualization, select Network Tables -> SmartDashboard -> Elevator Sim
@@ -194,13 +202,13 @@ public class ElevatorSubsystem extends SubsystemBase
   {
     // In this method, we update our simulation of what our elevator is doing
     // First, we set our "inputs" (voltages)
-    m_elevatorSim.setInput(m_motorSim.getAppliedOutput() * RoboRioSim.getVInVoltage());
+    m_elevatorSim.setInput(m_motor1Sim.getAppliedOutput() * RoboRioSim.getVInVoltage());
 
     // Next, we update it. The standard loop time is 20ms.
     m_elevatorSim.update(0.020);
 
     // Finally, we set our simulated encoder's readings and simulated battery voltage
-    m_motorSim.iterate(
+    m_motor1Sim.iterate(
         Elevator.convertDistanceToRotations(Meters.of(m_elevatorSim.getVelocityMetersPerSecond())).per(Second).in(RPM),
         RoboRioSim.getVInVoltage(),
         0.020);
@@ -240,7 +248,7 @@ public class ElevatorSubsystem extends SubsystemBase
         m_controller.calculate(getHeightMeters(), goal) +
         m_feedforward.calculateWithVelocities(getVelocityMetersPerSecond(),
                                               m_controller.getSetpoint().velocity), -7, 7);
-    m_motor.setVoltage(voltsOut);
+    m_motor1.setVoltage(voltsOut);
   }
 
   public void reachHoldGoal()
@@ -249,7 +257,7 @@ public class ElevatorSubsystem extends SubsystemBase
         m_controller.calculate(getHeightMeters(), lastestGoal) +
         m_feedforward.calculateWithVelocities(getVelocityMetersPerSecond(),
                                               m_controller.getSetpoint().velocity), -7, 7);
-    m_motor.setVoltage(voltsOut);
+    m_motor1.setVoltage(voltsOut);
   }
 
   /**
@@ -382,7 +390,7 @@ public class ElevatorSubsystem extends SubsystemBase
    */
   public void stop()
   {
-    m_motor.set(0.0);
+    m_motor1.set(0.0);
   }
 
   public Command holdPosition()
@@ -395,8 +403,9 @@ public class ElevatorSubsystem extends SubsystemBase
    */
   public void updateTelemetry()
   {
-    SmartDashboard.putNumber("ElevatorHeigh", this.getHeightMeters());
-    SmartDashboard.putNumber("ElevatorGoal", lastestGoal);
+    SmartDashboard.putNumber("Elevator Height", this.getHeightMeters());
+    SmartDashboard.putNumber("Elevator Goal", lastestGoal);
+    SmartDashboard.putNumber("Elevator Position", m_encoder.getPosition());
   }
 
   @Override
