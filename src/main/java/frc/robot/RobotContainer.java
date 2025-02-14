@@ -24,7 +24,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.elevator.ElevatorSubsystem;
 // garip hata import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
@@ -46,7 +45,7 @@ import swervelib.SwerveInputStream;
 public class RobotContainer {
 
   final CommandPS5Controller driver1 = new CommandPS5Controller(0);
-  final CommandPS5Controller driver2 = new CommandPS5Controller(1);
+  final CommandXboxController driver2 = new CommandXboxController(1);
 
   //private final SwerveSubsystem drivebase = new SwerveSubsystem(
     //  new File(Filesystem.getDeployDirectory(), "swerve/neo"));
@@ -99,41 +98,20 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    // Elevator hold
-    //elevator.setDefaultCommand(elevator.setAlternativeGoal());
-    //elevator.setDefaultCommand(elevator.holdPosition());
+    elevator.setDefaultCommand(elevator.holdPosition());
 
     if (Robot.isSimulation()) {
-      //driver1.back().onTrue(Commands.runOnce(() -> drivebase.resetOdometry(new Pose2d(3, 3, new Rotation2d()))));
+    
     }
     if (DriverStation.isTest()) {
     } else {
-      // Put Mechanism 2d to SmartDashboard
-      SmartDashboard.putData("Side View (Elevator)", ElevatorConstants.sideRobotView);
 
-      // m_driverController.button(1).whileTrue(arm.setGoal(15));
-      //driver1.button(1).whileTrue(elevator.setGoal(1));
-      //driver1.y().whileTrue(elevator.setIncrementalGoal(true));
-      //driver1.a().whileTrue(elevator.setIncrementalGoal(false));
-      //driver1.button(2).whileTrue(elevator.setGoal(6));
-      //driver1.button(2).whileTrue(arm.setGoal(45));
-      //driver1.povUp().onTrue(elevator.setGoal(0.5).repeatedly().until(elevator.IsAtTheDesiredHeigh(1, 0.1)));
-      //driver1.cross().onTrue(elevator.setGoal(0).repeatedly().until(elevator.IsAtTheDesiredHeigh(0, 0.1)));
-      //driver1.triangle().onTrue(elevator.setGoal(1).repeatedly().until(elevator.IsAtTheDesiredHeigh(1, 0.1)));
-      //driver1.circle().onTrue(elevator.setGoal(0.4).repeatedly().until(elevator.IsAtTheDesiredHeigh(0.5, 0.1)));
-      //driver1.button(3).whileTrue(elevator.setGoal(9));
-      //driver1.button(3).whileTrue(arm.setGoal(90));
 
-      //driver1.button(4).whileTrue(arm.setGoal(135));
+      driver2.a().onTrue(elevator.setElevatorPosition(0));
+      driver2.y().onTrue(elevator.setElevatorPosition(1));
 
-      // driver1.button(5).whileTrue(arm.runSysIdRoutine());
-      //driver1.button(5).whileTrue(elevator.runSysIdRoutine());
-
-      //driver1.button(6).whileTrue(arm.setGoal(70));
-      //driver1.button(6).whileTrue(elevator.setGoal(4));
-      // m_driverController.button(6).whileTrue(setElevArm(10, 70));
-
-      //elevator.atHeight(1.9, 0.1).whileTrue(Commands.print("I AM ALIVE, YAAA HAAAAA"));
+      driver2.leftBumper().onTrue(elevator.setStateDown());
+      driver2.leftBumper().onTrue(elevator.setStateUp());
     }
   }
 
@@ -157,8 +135,8 @@ public class RobotContainer {
    * return Autos.exampleAuto(m_exampleSubsystem);
    * }
    */
-  public ParallelCommandGroup setElevArm(double goal, double degree) {
-    return new ParallelCommandGroup(elevator.setGoal(goal));
+  public ParallelCommandGroup setElevArm(double goal) {
+    return new ParallelCommandGroup(elevator.setElevatorPosition(goal));
   }
 
   public void setDriveMode() {

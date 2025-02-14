@@ -62,7 +62,7 @@ public class AngleSubsystem  extends SubsystemBase{
             .d(0, ClosedLoopSlot.kSlot1)
             //from the example, idk what does it do
             .velocityFF(1.0/5767, ClosedLoopSlot.kSlot1)
-            .outputRange(-1, 1, ClosedLoopSlot.kSlot1);
+            .outputRange(-0.3, 0.3, ClosedLoopSlot.kSlot1);
 
         
         angleMotorConfig.softLimit
@@ -82,10 +82,10 @@ public class AngleSubsystem  extends SubsystemBase{
     }
 
 
-    public void SetAngle(Rotation2d angle){
+    public void SetAngle(double angle){
         //derece, kontrol türü, slot, feedforward!!!! ileride feedforward gerekebilir
         angleClosedLoopController.setReference(
-            angle.getDegrees(), 
+            angle, 
             ControlType.kPosition,
             ClosedLoopSlot.kSlot1
         ); 
@@ -93,7 +93,6 @@ public class AngleSubsystem  extends SubsystemBase{
 
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("Arm Position", encoder.getPosition());
-        SmartDashboard.putNumber("Arm Velocity", encoder.getVelocity());
+        SmartDashboard.putNumber("Arm Position", encoder.getPosition());    
     }
 }
