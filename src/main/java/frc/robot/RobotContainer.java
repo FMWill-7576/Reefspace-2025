@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
@@ -24,7 +25,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.subsystems.elevator.ElevatorSubsystem;
+import frc.robot.subsystems.arm.AngleSubsystem;
+import frc.robot.subsystems.elevator.Elevator;
+//import frc.robot.subsystems.elevator.ElevatorSubsystem;
 // garip hata import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
@@ -50,7 +53,10 @@ public class RobotContainer {
   //private final SwerveSubsystem drivebase = new SwerveSubsystem(
     //  new File(Filesystem.getDeployDirectory(), "swerve/neo"));
  
-  private final ElevatorSubsystem elevator = new ElevatorSubsystem();
+  private final Elevator elevator = new Elevator();
+  private final AngleSubsystem angleSubsystem = new AngleSubsystem();
+
+
 
   // Importing Auto's
   Path targetDir = Paths.get("").toAbsolutePath();;
@@ -98,7 +104,8 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    elevator.setDefaultCommand(elevator.holdPosition());
+    elevator.setDefaultCommand(elevator.elevHoldCommand());
+    angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
 
     if (Robot.isSimulation()) {
     
@@ -106,12 +113,33 @@ public class RobotContainer {
     if (DriverStation.isTest()) {
     } else {
 
+      
+      driver2.x().onTrue(elevator.setgoal(0));
+      //driver2.y().onTrue(elevator.setgoal(0.3));
+      driver2.b().onTrue(elevator.setgoal(1));
+      //driver2.b().onTrue(elevator.setgoal(4));
+      
+      driver2.povUp().whileTrue(elevator.manualUpCommand());
+      driver2.povDown().whileTrue(elevator.manualDownCommand());
 
-      driver2.a().onTrue(elevator.setElevatorPosition(0));
-      driver2.y().onTrue(elevator.setElevatorPosition(1));
+      driver2.a().onTrue(angleSubsystem.setAngleAsRotationCommand(Rotation2d.fromDegrees(0)));
+      driver2.y().onTrue(angleSubsystem.setAngleAsRotationCommand(Rotation2d.fromDegrees(0.69)));
 
-      driver2.leftBumper().onTrue(elevator.setStateDown());
-      driver2.leftBumper().onTrue(elevator.setStateUp());
+      //driver2.b().onTrue(angleSubsystem.resetEncoder());
+  
+
+      
+
+      //driver2.leftBumper().onTrue(elevator.setStateDown());
+      //driver2.leftBumper().onTrue(elevator.setStateUp());
+
+      /*
+      driver2.a().whileTrue(angleSubsystem.armUp());
+      driver2.a().whileFalse(angleSubsystem.armStop());
+      driver2.y().whileTrue(angleSubsystem.armDown());
+      driver2.y().whileFalse(angleSubsystem.armStop());
+      */
+
     }
   }
 
@@ -124,6 +152,7 @@ public class RobotContainer {
     return autoChooser.getSelected();
   }
 
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
@@ -135,10 +164,11 @@ public class RobotContainer {
    * return Autos.exampleAuto(m_exampleSubsystem);
    * }
    */
+  /*/
   public ParallelCommandGroup setElevArm(double goal) {
     return new ParallelCommandGroup(elevator.setElevatorPosition(goal));
   }
-
+  */
   public void setDriveMode() {
     configureBindings();
   }

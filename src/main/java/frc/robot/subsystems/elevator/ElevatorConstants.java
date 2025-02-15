@@ -9,7 +9,7 @@ public class ElevatorConstants {
 
     //Tuning
     public static double kS = 0;
-    public static double kG = 0;
+    public static double kG = 0.1;
     public static double kV = 0;
     public static double kA = 0;
 
@@ -18,7 +18,7 @@ public class ElevatorConstants {
     public static String kV_key = "Elevator_kV";
     public static String kA_key = "Elevator_kA";
 
-    public static double kP = 0;
+    public static double kP = 1;
     public static double kI = 0;
     public static double kD = 0;
 
@@ -36,8 +36,7 @@ public class ElevatorConstants {
     //Robot Information
 
     public static double maxPosition = 4.5;
-    public static int smartCurrent = 30;
-
+    public static int smartCurrent = 50;
 
     //Presets
     public static double[] states = {
