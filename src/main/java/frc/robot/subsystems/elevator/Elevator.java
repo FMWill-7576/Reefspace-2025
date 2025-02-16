@@ -22,7 +22,7 @@ import frc.robot.Constants;
 public class Elevator extends SubsystemBase {
 
   private final SparkMax elevMotor;
-  private final SparkMax elevFollower;
+  private SparkMax elevFollower;
   private SparkMaxConfig elevConfig;
   private SparkMaxConfig elevFollowerConfig;
   private RelativeEncoder throughbEncoder;
@@ -35,8 +35,8 @@ public class Elevator extends SubsystemBase {
 
   public Elevator() {
 
-    elevMotor = new SparkMax(ElevatorConsta
-    tants.secondaryMotorPort, MotorType.kBrushless);
+    elevMotor = new SparkMax(ElevatorConstants.mainMotorPort, MotorType.kBrushless);
+    elevFollower = new SparkMax(ElevatorConstants.secondaryMotorPort, MotorType.kBrushless);
 
     elevConfig = new SparkMaxConfig();
     elevFollowerConfig = new SparkMaxConfig();
@@ -47,8 +47,6 @@ public class Elevator extends SubsystemBase {
 
     setConfigs();
     applyConfigs();
-
-    
   }
 
   public void elevSet(double elevHeight) {
@@ -119,7 +117,7 @@ public class Elevator extends SubsystemBase {
         .reverseSoftLimitEnabled(true)
           .reverseSoftLimit(0)
           .forwardSoftLimitEnabled(true)
-          .forwardSoftLimit(4.2);
+          .forwardSoftLimit(4.5);
        
 
     elevConfig.alternateEncoder.countsPerRevolution(8192).inverted(true);
