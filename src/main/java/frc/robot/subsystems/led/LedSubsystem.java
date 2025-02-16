@@ -28,7 +28,7 @@ public class LedSubsystem extends SubsystemBase {
     //PWM port
      s_led = new AddressableLED(0);
      //Lenght
-     s_buffer = new AddressableLEDBuffer(60);
+     s_buffer = new AddressableLEDBuffer(40);
 
      //Experimental, may use later.
      /*
@@ -56,9 +56,9 @@ public class LedSubsystem extends SubsystemBase {
   public Command Blue(){
     return(run(()->{
       LEDPattern base = LEDPattern.solid(Color.kBlue);
-      LEDPattern pattern = base.breathe(Seconds.of(2));
+      //LEDPattern pattern = base.breathe(Seconds.of(2));
 
-      pattern.applyTo(s_buffer);
+      base.applyTo(s_buffer);
     }));
   }
 }
