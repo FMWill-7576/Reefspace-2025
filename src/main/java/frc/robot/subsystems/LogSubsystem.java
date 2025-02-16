@@ -12,10 +12,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class LogSubsystem extends SubsystemBase {
   
+  /*
   private CANcoder frontRightCan = new CANcoder(1);
   private CANcoder frontLeftCan = new CANcoder(1);
   private CANcoder backRightCan = new CANcoder(1);
   private CANcoder backLeftCan = new CANcoder(1);
+  */
 
   public LogSubsystem() {}
 
@@ -31,10 +33,12 @@ public class LogSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    /* 
     SmartDashboard.putNumber("front left cancoder", frontLeftCan.getPosition().getValueAsDouble());
     SmartDashboard.putNumber("front right cancoder", frontRightCan.getPosition().getValueAsDouble());
     SmartDashboard.putNumber("back left cancoder", backLeftCan.getPosition().getValueAsDouble());
     SmartDashboard.putNumber("back right cancoder", backRightCan.getPosition().getValueAsDouble());
+    */
   }
 
   @Override

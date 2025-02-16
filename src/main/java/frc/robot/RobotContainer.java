@@ -26,7 +26,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.subsystems.arm.AngleSubsystem;
+import frc.robot.subsystems.arm.OtReisSubsystem;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.led.LedSubsystem;
 //import frc.robot.subsystems.elevator.ElevatorSubsystem;
 // garip hata import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
@@ -36,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.function.BooleanSupplier;
 
 import swervelib.SwerveInputStream;
+
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -49,14 +52,16 @@ public class RobotContainer {
 
   final CommandPS5Controller driver1 = new CommandPS5Controller(0);
   final CommandXboxController driver2 = new CommandXboxController(1);
+  private double swerveSpeed = 0.25;
+  private double swerveYawSpeed = 0.25;
 
-  //private final SwerveSubsystem drivebase = new SwerveSubsystem(
-    //  new File(Filesystem.getDeployDirectory(), "swerve/neo"));
- 
+  private final SwerveSubsystem drivebase = new SwerveSubsystem(
+      new File(Filesystem.getDeployDirectory(), "swerve"));
+
   private final Elevator elevator = new Elevator();
   private final AngleSubsystem angleSubsystem = new AngleSubsystem();
-
-
+  //private final LedSubsystem s_led = new LedSubsystem();
+  private final OtReisSubsystem otReis = new OtReisSubsystem();
 
   // Importing Auto's
   Path targetDir = Paths.get("").toAbsolutePath();;
@@ -66,6 +71,57 @@ public class RobotContainer {
   // Auto Chooser
   SendableChooser<Command> autoChooser = new SendableChooser<>();
 
+  // SWERVELER
+
+  SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
+      () -> driver1.getLeftY() * -1 * swerveSpeed,
+      () -> driver1.getLeftX() * -1 * swerveSpeed)
+      .withControllerRotationAxis(driver1::getRightX)
+      .deadband(OperatorConstants.DEADBAND)
+      .scaleTranslation(0.8)
+      .allianceRelativeControl(true);
+
+  /**
+   * Clone's the angular velocity input stream and converts it to a fieldRelative
+   * input stream.
+   */
+  SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(driver1::getRightX,
+      driver1::getRightY)
+      .headingWhile(true);
+
+  /**
+   * Clone's the angular velocity input stream and converts it to a robotRelative
+   * input stream.
+   */
+  SwerveInputStream driveRobotOriented = driveAngularVelocity.copy().robotRelative(true)
+      .allianceRelativeControl(false);
+
+  SwerveInputStream driveAngularVelocityKeyboard = SwerveInputStream.of(drivebase.getSwerveDrive(),
+      () -> -driver1.getLeftY(),
+      () -> -driver1.getLeftX())
+      .withControllerRotationAxis(() -> driver1.getRawAxis(
+          2))
+      .deadband(OperatorConstants.DEADBAND)
+      .scaleTranslation(0.8)
+      .allianceRelativeControl(true);
+  // Derive the heading axis with math!
+  SwerveInputStream driveDirectAngleKeyboard = driveAngularVelocityKeyboard.copy()
+      .withControllerHeadingAxis(() -> Math.sin(
+          driver1.getRawAxis(
+              2) *
+              Math.PI)
+          *
+          (Math.PI *
+              2),
+          () -> Math.cos(
+              driver1.getRawAxis(
+                  2) *
+                  Math.PI)
+              *
+              (Math.PI *
+                  2))
+      .headingWhile(true);
+
   public RobotContainer() {
 
     // Configure the trigger bindings
@@ -74,7 +130,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("test", Commands.print("I EXIST"));
 
     // Autonomous Chooser (Searchs auto folder)
-    /*
+
     autoChooser.setDefaultOption("do nothing", drivebase.getAutonomousCommand("do nothing"));
     SmartDashboard.putData(autoChooser);
     if (listOfAutos != null) {
@@ -85,9 +141,7 @@ public class RobotContainer {
         }
       }
     }
-       */
   }
-
 
   /**
    * Use this method to define your trigger->command mappings. Triggers can be
@@ -104,41 +158,62 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
+    Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
+    Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
+    Command driveRobotOrientedAngularVelocity  = drivebase.driveFieldOriented(driveRobotOriented);
+    Command driveSetpointGen = drivebase.driveWithSetpointGeneratorFieldRelative(
+        driveDirectAngle);
+    Command driveFieldOrientedDirectAngleKeyboard      = drivebase.driveFieldOriented(driveDirectAngleKeyboard);
+    Command driveFieldOrientedAnglularVelocityKeyboard = drivebase.driveFieldOriented(driveAngularVelocityKeyboard);
+    Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
+        driveDirectAngleKeyboard);
+
     elevator.setDefaultCommand(elevator.elevHoldCommand());
     angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
+    otReis.setDefaultCommand(otReis.OtReisStop());
 
     if (Robot.isSimulation()) {
-    
+      drivebase.setDefaultCommand(driveFieldOrientedDirectAngleKeyboard);
     }
     if (DriverStation.isTest()) {
+
+      drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity); // Overrides drive command above!
+
     } else {
 
-      
+      drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
+
       driver2.x().onTrue(elevator.setgoal(0));
-      //driver2.y().onTrue(elevator.setgoal(0.3));
+      // driver2.y().onTrue(elevator.setgoal(0.3));
       driver2.b().onTrue(elevator.setgoal(1));
-      //driver2.b().onTrue(elevator.setgoal(4));
-      
+      driver2.povRight().onTrue(elevator.setgoal(4.2));
+      // driver2.b().onTrue(elevator.setgoal(4));
+
       driver2.povUp().whileTrue(elevator.manualUpCommand());
       driver2.povDown().whileTrue(elevator.manualDownCommand());
 
       driver2.a().onTrue(angleSubsystem.setAngleAsRotationCommand(Rotation2d.fromDegrees(0)));
       driver2.y().onTrue(angleSubsystem.setAngleAsRotationCommand(Rotation2d.fromDegrees(0.69)));
 
-      //driver2.b().onTrue(angleSubsystem.resetEncoder());
-  
 
-      
+      //SWERVE
+      //driver1.cross().onTrue((Commands.runOnce(drivebase::zeroGyro)));
+      //driver1.circle().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
 
-      //driver2.leftBumper().onTrue(elevator.setStateDown());
-      //driver2.leftBumper().onTrue(elevator.setStateUp());
+      driver1.cross().whileTrue(otReis.OtReisIntake());
+      driver1.triangle().whileTrue(otReis.OtReisShooter());
+
+      // driver2.b().onTrue(angleSubsystem.resetEncoder());
+
+      // driver2.leftBumper().onTrue(elevator.setStateDown());
+      // driver2.leftBumper().onTrue(elevator.setStateUp());
 
       /*
-      driver2.a().whileTrue(angleSubsystem.armUp());
-      driver2.a().whileFalse(angleSubsystem.armStop());
-      driver2.y().whileTrue(angleSubsystem.armDown());
-      driver2.y().whileFalse(angleSubsystem.armStop());
-      */
+       * driver2.a().whileTrue(angleSubsystem.armUp());
+       * driver2.a().whileFalse(angleSubsystem.armStop());
+       * driver2.y().whileTrue(angleSubsystem.armDown());
+       * driver2.y().whileFalse(angleSubsystem.armStop());
+       */
 
     }
   }
@@ -151,25 +226,9 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
   }
-
-
-  /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
-   *
-   * @return the command to run in autonomous
-   */
-  /*
-   * public Command getAutonomousCommand() {
-   * // An example command will be run in autonomous
-   * return Autos.exampleAuto(m_exampleSubsystem);
-   * }
-   */
-  /*/
-  public ParallelCommandGroup setElevArm(double goal) {
-    return new ParallelCommandGroup(elevator.setElevatorPosition(goal));
+  public void setMotorBrake(boolean brake)
+  {
+    drivebase.setMotorBrake(brake);
   }
-  */
-  public void setDriveMode() {
-    configureBindings();
-  }
+
 }
