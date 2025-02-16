@@ -11,6 +11,7 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.networktables.RawTopic;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
@@ -32,10 +34,17 @@ import frc.robot.subsystems.led.LedSubsystem;
 //import frc.robot.subsystems.elevator.ElevatorSubsystem;
 // garip hata import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.subsystems.swervedrive.Vision;
+import frc.robot.subsystems.vision.VisionSubsystem;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+
+import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 import swervelib.SwerveInputStream;
 
@@ -62,6 +71,7 @@ public class RobotContainer {
   private final AngleSubsystem angleSubsystem = new AngleSubsystem();
   //private final LedSubsystem s_led = new LedSubsystem();
   private final OtReisSubsystem otReis = new OtReisSubsystem();
+  private final VisionSubsystem vision = new VisionSubsystem();
 
   // Importing Auto's
   Path targetDir = Paths.get("").toAbsolutePath();;
@@ -74,12 +84,15 @@ public class RobotContainer {
   // SWERVELER
 
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-      () -> driver1.getLeftY() * -1 * swerveSpeed,
-      () -> driver1.getLeftX() * -1 * swerveSpeed)
+      () -> driver1.getLeftY() * -1,
+      () -> driver1.getLeftX() * -1)
       .withControllerRotationAxis(driver1::getRightX)
       .deadband(OperatorConstants.DEADBAND)
-      .scaleTranslation(0.8)
+      .scaleTranslation(swerveSpeed)
+      .scaleRotation(swerveYawSpeed)
       .allianceRelativeControl(true);
+
+    
 
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative
@@ -183,25 +196,23 @@ public class RobotContainer {
 
       drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
 
-      driver2.x().onTrue(elevator.setgoal(0));
-      // driver2.y().onTrue(elevator.setgoal(0.3));
-      driver2.b().onTrue(elevator.setgoal(1));
-      driver2.povRight().onTrue(elevator.setgoal(4.2));
-      // driver2.b().onTrue(elevator.setgoal(4));
+      //Set elevator as setpoints
+      driver2.leftBumper().onTrue(elevator.StateDownCommand());
+      driver2.rightBumper().onTrue(elevator.StateUpCommand());
 
-      driver2.povUp().whileTrue(elevator.manualUpCommand());
-      driver2.povDown().whileTrue(elevator.manualDownCommand());
-
-      driver2.a().onTrue(angleSubsystem.setAngleAsRotationCommand(Rotation2d.fromDegrees(0)));
-      driver2.y().onTrue(angleSubsystem.setAngleAsRotationCommand(Rotation2d.fromDegrees(0.69)));
+      //Angle için okuma yap
+  
 
 
       //SWERVE
-      //driver1.cross().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-      //driver1.circle().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
+      driver1.cross().onTrue((Commands.runOnce(drivebase::zeroGyro)));
+      driver1.circle().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
 
-      driver1.cross().whileTrue(otReis.OtReisIntake());
-      driver1.triangle().whileTrue(otReis.OtReisShooter());
+      /*
+      driver1.triangle()
+        .whileTrue(new InstantCommand(()->this.aimAtBestTargetPID()))
+        .onFalse(new InstantCommand(()->drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity)));
+      */
 
       // driver2.b().onTrue(angleSubsystem.resetEncoder());
 
@@ -230,5 +241,42 @@ public class RobotContainer {
   {
     drivebase.setMotorBrake(brake);
   }
+  public void aimAtBestTargetTest(){
+    PhotonTrackedTarget id = vision.bestTarget();
+    Translation2d translation = new Translation2d(id.getBestCameraToTarget().getMeasureX(),id.getBestCameraToTarget().getMeasureY());
+    Rotation2d rotation = new Rotation2d(id.getYaw());
+    Pose2d aimPose = new Pose2d(translation,rotation);
+    Command driveAimCommand = drivebase.driveToPose(aimPose);
+
+    drivebase.setDefaultCommand(driveAimCommand);
+  }
+
+  public void aimAtBestTargetPID() {
+    PhotonTrackedTarget id = vision.bestTarget();
+
+    double getGoal = MathUtil.clamp(vision.getLastestPID().calculate(drivebase.getPose().getRotation().getRadians(), Math.toRadians(id.getYaw())), -1, 1);
+
+    Rotation2d goalRotation = new Rotation2d(getGoal);
+
+    SwerveInputStream driveVelocityAim = SwerveInputStream.of(drivebase.getSwerveDrive(),
+      () -> driver1.getLeftY() * -1,
+      () -> driver1.getLeftX() * -1)
+      .headingOffset(goalRotation)
+      .deadband(OperatorConstants.DEADBAND)
+      .scaleTranslation(swerveSpeed)
+      .allianceRelativeControl(true);
+
+    
+
+    Command driveAimCommand = drivebase.driveFieldOriented(driveVelocityAim);
+    drivebase.setDefaultCommand(driveAimCommand);
+  }
+
+  public void aimAtCurrentTagWithFieldYaw(){
+    PhotonTrackedTarget id = vision.bestTarget();
+    double radianYaw = vision.getAprilTagYawAsRadian(id.getFiducialId());
+  }
+
+
 
 }
