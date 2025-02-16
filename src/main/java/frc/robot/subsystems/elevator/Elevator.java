@@ -11,148 +11,157 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
 
-@Logged
 public class Elevator extends SubsystemBase {
 
-  private final SparkMax elevMotor;
-  private SparkMax elevFollower;
-  private SparkMaxConfig elevConfig;
-  private SparkMaxConfig elevFollowerConfig;
-  private RelativeEncoder throughbEncoder;
-  private SparkClosedLoopController elevController;
-  private ElevatorFeedforward feedforward;
-  private static double kS = 0;
-  private static double kG = 0.7;
-  private static double kV = 0.05;
+  private final SparkMax mainMotor = new SparkMax(ElevatorConstants.mainMotorPort, MotorType.kBrushless);
+  private SparkMax secondaryMotor = new SparkMax(ElevatorConstants.secondaryMotorPort, MotorType.kBrushless);
+  private SparkMaxConfig mainConfig = new SparkMaxConfig();
+  private SparkMaxConfig secondaryConfig = new SparkMaxConfig();
+  private RelativeEncoder boreEncoder = mainMotor.getAlternateEncoder();
+  private SparkClosedLoopController controller = mainMotor.getClosedLoopController();
   private static double setpoint;
 
+  public static double kS = 0;
+  public static double kG = 0.7;
+  public static double kV = 0;
+  public static double kA = 0.05;
+
+  //For state change
+  public int currentIndex = 0;
+
   public Elevator() {
+    mainConfig
+        .inverted(true)
+        .smartCurrentLimit(ElevatorConstants.smartCurrent)
+        .idleMode(IdleMode.kBrake)
+        .openLoopRampRate(0.25)
+        .closedLoopRampRate(0.15)
+        .softLimit
+          .reverseSoftLimitEnabled(true)
+          .reverseSoftLimit(0)
+          .forwardSoftLimitEnabled(true)
+          .forwardSoftLimit(4.5);
 
-    elevMotor = new SparkMax(ElevatorConstants.mainMotorPort, MotorType.kBrushless);
-    elevFollower = new SparkMax(ElevatorConstants.secondaryMotorPort, MotorType.kBrushless);
+    mainConfig.alternateEncoder
+        .countsPerRevolution(8192)
+        .inverted(true);
 
-    elevConfig = new SparkMaxConfig();
-    elevFollowerConfig = new SparkMaxConfig();
+    mainConfig.closedLoop
+        .feedbackSensor(FeedbackSensor.kAlternateOrExternalEncoder)
+        .pid(ElevatorConstants.kP, ElevatorConstants.kI, ElevatorConstants.kD)
+        .outputRange(ElevatorConstants.minOutput, ElevatorConstants.maxOutput);
 
-    throughbEncoder = elevMotor.getAlternateEncoder();
-    elevController = elevMotor.getClosedLoopController();
-    feedforward = new ElevatorFeedforward(kS, kG, kV);
+    secondaryConfig
+        .apply(mainConfig)
+        .follow(mainMotor);
+    mainMotor.configure(mainConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    secondaryMotor.configure(secondaryConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    setConfigs();
-    applyConfigs();
+    setupPreferences();
   }
 
-  public void elevSet(double elevHeight) {
+  public void setPosition(double elevHeight) {
 
-    elevController.setReference(
+    controller.setReference(
         elevHeight,
         SparkMax.ControlType.kPosition,
         ClosedLoopSlot.kSlot0,
-        feedforward.calculate(throughbEncoder.getPosition() <= elevHeight ? 1.0 : -1.0),
+        getLastestFeedforward().calculate(boreEncoder.getPosition() <= elevHeight ? 1.0 : -1.0),
         ArbFFUnits.kVoltage);
 
     setpoint = elevHeight;
   }
 
-  public Command elevHoldCommand(){
-    return run(()->elevHold());
+  public ElevatorFeedforward getLastestFeedforward() {
+    ElevatorFeedforward newFeed = new ElevatorFeedforward(
+      Preferences.getDouble(ElevatorConstants.kS_key, kS), 
+      Preferences.getDouble(ElevatorConstants.kG_key, kG), 
+      Preferences.getDouble(ElevatorConstants.kV_key, kV)
+    );
+    return newFeed;
   }
 
-  public Command setgoal(double goal){
-    return run(()->elevSet(goal));
+  //State Holding
+  public void GoCurrentState(){
+    setPosition(ElevatorConstants.states[currentIndex]);
   }
 
-  public Command manualUpCommand(){
-    return run(()->elevUp());
+  public void StateUp() {
+    if(currentIndex<ElevatorConstants.states.length){
+      currentIndex+=1;
+    }
+    GoCurrentState();
+  }
+  public Command StateUpCommand(){
+    return run(()->StateUp());
   }
 
-  public Command manualDownCommand(){
-    return run(()->elevDown());
+  public void StateDown() {
+    if(currentIndex>0){
+      currentIndex-=1;
+    }
+    GoCurrentState();
+  }
+  public Command StateDownCommand(){
+    return run(()->StateDown());
+  }
+
+
+  //misc
+  public Command elevHoldCommand() {
+    return run(() -> elevHold());
+  }
+
+  public Command setgoal(double goal) {
+    return run(() -> setPosition(goal));
+  }
+
+  public Command manualUpCommand() {
+    return run(() -> elevUp());
+  }
+
+  public Command manualDownCommand() {
+    return run(() -> elevDown());
   }
 
   public void elevHold() {
-    elevSet(throughbEncoder.getPosition());
+    setPosition(boreEncoder.getPosition());
   }
 
   public void elevUp() {
-    elevMotor.set(0.1);
+    mainMotor.set(0.1);
   }
 
   public void elevDown() {
-    elevMotor.set(-0.1);
+    mainMotor.set(-0.1);
   }
 
   public void elevStop() {
-    elevMotor.set(0.0);
+    mainMotor.set(0.0);
   }
 
   public void elevVoltage(double voltage) {
-    elevMotor.setVoltage(voltage);
+    mainMotor.setVoltage(voltage);
   }
 
-  /** Method to Apply the configuration to the SPARKs. */
-  private void applyConfigs() {
-    elevMotor.configure(elevConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-    elevFollower.configure(
-        elevFollowerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-  }
-
-  /** Set parameters that will apply to all SPARKs. */
-  private void setConfigs() {
-    elevConfig
-        .inverted(true)
-        .smartCurrentLimit(50)
-        .idleMode(IdleMode.kBrake)
-        .openLoopRampRate(0.25)
-        .closedLoopRampRate(0.15)
-        .voltageCompensation(12.0)
-        .softLimit
-        .reverseSoftLimitEnabled(true)
-          .reverseSoftLimit(0)
-          .forwardSoftLimitEnabled(true)
-          .forwardSoftLimit(4.5);
-       
-
-    elevConfig.alternateEncoder.countsPerRevolution(8192).inverted(true);
-
-    elevConfig
-        .closedLoop
-        .feedbackSensor(FeedbackSensor.kAlternateOrExternalEncoder)
-        // Set PID values for position control. We don't need to pass a closed loop
-        // slot, as it will default to slot 0.
-        .p(1.2)
-        .i(0)
-        .d(1)
-        .outputRange(-0.8, 9.5);
-
-    elevConfig
-        .signals
-        .appliedOutputPeriodMs(5)
-        .externalOrAltEncoderPositionAlwaysOn(true)
-        .externalOrAltEncoderVelocityAlwaysOn(false)
-        .externalOrAltEncoderVelocity(20)
-        .externalOrAltEncoderPosition(5)
-        .primaryEncoderPositionPeriodMs(500)
-        .primaryEncoderVelocityPeriodMs(500);
-
-    elevFollowerConfig.apply(elevConfig).follow(elevMotor);
+  public void setupPreferences(){
+      Preferences.initDouble(ElevatorConstants.kS_key, kS);
+      Preferences.initDouble(ElevatorConstants.kG_key, kG);
+      Preferences.initDouble(ElevatorConstants.kV_key, kV);
   }
 
   @Override
   public void periodic() {
-    // Display the applied output of the left and right side onto the dashboard
-    SmartDashboard.putNumber("Elev Out", elevMotor.getAppliedOutput());
-    SmartDashboard.putNumber("Elev Position", throughbEncoder.getPosition());
+    SmartDashboard.putNumber("Elev Out", mainMotor.getAppliedOutput());
+    SmartDashboard.putNumber("Elev Position", boreEncoder.getPosition());
     SmartDashboard.putNumber("Elev Setpoint", setpoint);
-    SmartDashboard.putNumber("Elev output amps", elevMotor.getOutputCurrent());
-    SmartDashboard.putNumber("Elev temp", elevMotor.getMotorTemperature());
-    // This method will be called once per scheduler run
+    SmartDashboard.putNumber("Elev output amps", mainMotor.getOutputCurrent());
+    SmartDashboard.putNumber("Elev temp", mainMotor.getMotorTemperature());
   }
 }
