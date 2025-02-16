@@ -19,6 +19,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -44,8 +45,6 @@ public class AngleSubsystem  extends SubsystemBase{
         //Let's initilaze the closed loop control
         angleClosedLoopController = angleMotor.getClosedLoopController();  
 
-        //THIS ENCODER IS %50 FALSE. ONLY USING FOR PROTOTYPING PURPOSES!!!!
-        //Could be both the alternate or the absolute encoder. I'm not sure.
         encoder = angleMotor.getAbsoluteEncoder();
 
         //Initilazing the config
@@ -94,14 +93,14 @@ public class AngleSubsystem  extends SubsystemBase{
         ); 
     }
 
-    public void SetAngleRotation(Rotation2d angle){
+    public void SetAngleRotation(angle){
         //derece, kontrol türü, slot, feedforward!!!! ileride feedforward gerekebilir
-        setpoint = angle.getDegrees();
+        setpoint = angle;
         angleClosedLoopController.setReference(
-            angle.getDegrees(), 
+            angle, 
             ControlType.kPosition,
             ClosedLoopSlot.kSlot1,
-            feedforward.calculate(angle.getRadians(),0),
+            feedforward.calculate(Math.toRadians(angle),0),
             ArbFFUnits.kVoltage
         ); 
     }
