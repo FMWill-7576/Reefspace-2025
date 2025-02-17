@@ -38,5 +38,9 @@ public class OtReisSubsystem extends SubsystemBase{
     public Command OtReisStop(){
         return run(()->shooterMotor.set(-0.1));
     }
+
+    public Command OtReisSetCommand(double goal){
+        return run(()->shooterMotor.set(goal));
+    }
 }
 

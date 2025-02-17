@@ -1,5 +1,7 @@
 package frc.robot.subsystems.elevator;
 
+import java.util.function.BooleanSupplier;
+
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -11,11 +13,14 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.arm.AngleSubsystem;
 
 public class Elevator extends SubsystemBase {
 
@@ -28,12 +33,12 @@ public class Elevator extends SubsystemBase {
   private static double setpoint;
 
   public static double kS = 0;
-  public static double kG = 0.7;
+  public static double kG = 0.5;
   public static double kV = 0;
   public static double kA = 0.05;
 
   //For state change
-  public int currentIndex = 0;
+  public static int currentIndex = 0;
 
   public Elevator() {
     mainConfig
@@ -46,7 +51,7 @@ public class Elevator extends SubsystemBase {
           .reverseSoftLimitEnabled(true)
           .reverseSoftLimit(0)
           .forwardSoftLimitEnabled(true)
-          .forwardSoftLimit(4.5);
+          .forwardSoftLimit(ElevatorConstants.maxPosition);
 
     mainConfig.alternateEncoder
         .countsPerRevolution(8192)
@@ -67,15 +72,13 @@ public class Elevator extends SubsystemBase {
   }
 
   public void setPosition(double elevHeight) {
-
+    setpoint = elevHeight;
     controller.setReference(
         elevHeight,
         SparkMax.ControlType.kPosition,
         ClosedLoopSlot.kSlot0,
         getLastestFeedforward().calculate(boreEncoder.getPosition() <= elevHeight ? 1.0 : -1.0),
         ArbFFUnits.kVoltage);
-
-    setpoint = elevHeight;
   }
 
   public ElevatorFeedforward getLastestFeedforward() {
@@ -87,33 +90,41 @@ public class Elevator extends SubsystemBase {
     return newFeed;
   }
 
+  public void safeElevatorSet(double setpoint, AngleSubsystem angle){
+    double currentPos = angle.getEncoder();
+  }
+
+  public BooleanSupplier IsAtDesiredHeightAsBooleanSupplier(double height, double tolerance){
+    BooleanSupplier a = ()-> MathUtil.isNear(height, boreEncoder.getPosition(), tolerance);
+    return a;
+  }
+
+  public double getCurrentSetpoint() {
+    return setpoint;
+  }
+
   //State Holding
-  public void GoCurrentState(){
-    setPosition(ElevatorConstants.states[currentIndex]);
-  }
-
-  public void StateUp() {
-    if(currentIndex<ElevatorConstants.states.length){
-      currentIndex+=1;
-    }
-    GoCurrentState();
-  }
   public Command StateUpCommand(){
-    return run(()->StateUp());
+    if(currentIndex<ElevatorConstants.states.length-1){
+      currentIndex = currentIndex+1;
+    }
+    //return this.run(()->setPosition(ElevatorConstants.states[currentIndex]));
+    return run(()->{});
   }
 
-  public void StateDown() {
-    if(currentIndex>0){
-      currentIndex-=1;
-    }
-    GoCurrentState();
-  }
   public Command StateDownCommand(){
-    return run(()->StateDown());
+    if(currentIndex>0){
+      currentIndex = currentIndex - 1;
+    }
+    //return this.run(()->setPosition(ElevatorConstants.states[currentIndex]));
+    return run(()->{});
   }
 
 
   //misc
+  public double getPosition() {
+    return boreEncoder.getPosition();
+  }
   public Command elevHoldCommand() {
     return run(() -> elevHold());
   }
@@ -163,5 +174,6 @@ public class Elevator extends SubsystemBase {
     SmartDashboard.putNumber("Elev Setpoint", setpoint);
     SmartDashboard.putNumber("Elev output amps", mainMotor.getOutputCurrent());
     SmartDashboard.putNumber("Elev temp", mainMotor.getMotorTemperature());
+    SmartDashboard.putNumber("current index", currentIndex);
   }
 }
