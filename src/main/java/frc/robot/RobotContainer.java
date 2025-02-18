@@ -64,8 +64,8 @@ public class RobotContainer {
 
   final CommandPS5Controller driver1 = new CommandPS5Controller(0);
   final CommandXboxController driver2 = new CommandXboxController(1);
-  private double swerveSpeed = 1;
-  private double swerveYawSpeed = 1;
+  private double swerveSpeed = 0.5;
+  private double swerveYawSpeed = 0.5;
 
   private final SwerveSubsystem drivebase = new SwerveSubsystem(
       new File(Filesystem.getDeployDirectory(), "swerve"));
@@ -87,12 +87,11 @@ public class RobotContainer {
   // SWERVELER
 
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-      () -> driver1.getLeftY() * -1,
-      () -> driver1.getLeftX() * -1)
-      .withControllerRotationAxis(driver1::getRightX)
+      () -> driver1.getLeftY() * -1 * swerveSpeed,
+      () -> driver1.getLeftX() * -1 * swerveSpeed)
+      .withControllerRotationAxis(()->driver1.getRightX()*swerveYawSpeed)
       .deadband(OperatorConstants.DEADBAND)
-      .scaleTranslation(swerveSpeed)
-      .scaleRotation(-swerveYawSpeed)
+      .scaleTranslation(0.8)
       .allianceRelativeControl(true);
 
     
@@ -183,6 +182,15 @@ public class RobotContainer {
     Command driveFieldOrientedAnglularVelocityKeyboard = drivebase.driveFieldOriented(driveAngularVelocityKeyboard);
     Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
         driveDirectAngleKeyboard);
+
+    Command driveFieldOrientedDA = drivebase.driveCommand(
+      ()->MathUtil.applyDeadband(driver1.getLeftY(), Constants.OperatorConstants.LEFT_Y_DEADBAND), 
+      ()->MathUtil.applyDeadband(driver1.getLeftX(), Constants.OperatorConstants.LEFT_X_DEADBAND), 
+      ()->driver1.getRightX(),
+      ()->driver1.getRightY()
+      );
+
+
 
     elevator.setDefaultCommand(elevator.elevHoldCommand());
     angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
