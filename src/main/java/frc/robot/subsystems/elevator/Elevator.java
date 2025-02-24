@@ -32,10 +32,9 @@ public class Elevator extends SubsystemBase {
   private SparkClosedLoopController controller = mainMotor.getClosedLoopController();
   private static double setpoint;
 
-  public static double kS = 0;
-  public static double kG = 0.5;
-  public static double kV = 0;
-  public static double kA = 0.05;
+  public static double kS = ElevatorConstants.kS;
+  public static double kG = ElevatorConstants.kG;
+  public static double kV = ElevatorConstants.kV;
 
   //For state change
   public static int currentIndex = 0;
@@ -44,7 +43,7 @@ public class Elevator extends SubsystemBase {
     mainConfig
         .inverted(true)
         .smartCurrentLimit(ElevatorConstants.smartCurrent)
-        .idleMode(IdleMode.kBrake)
+        .idleMode(IdleMode.kCoast)
         .openLoopRampRate(0.25)
         .closedLoopRampRate(0.15)
         .softLimit
@@ -139,6 +138,9 @@ public class Elevator extends SubsystemBase {
 
   public Command manualDownCommand() {
     return run(() -> elevDown());
+  }
+  public Command manualStopCommand() {
+    return run(() -> elevHold());
   }
 
   public void elevHold() {

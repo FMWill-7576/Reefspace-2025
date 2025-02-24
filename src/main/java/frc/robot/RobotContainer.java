@@ -26,10 +26,13 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj.Preferences;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.elevatorArm.safeElevator;
 import frc.robot.subsystems.arm.AngleSubsystem;
 import frc.robot.subsystems.arm.OtReisSubsystem;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.led.LedSubsystem;
 //import frc.robot.subsystems.elevator.ElevatorSubsystem;
 // garip hata import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
@@ -91,6 +94,7 @@ public class RobotContainer {
       .scaleTranslation(swerveSpeed)
       .scaleRotation(swerveYawSpeed)
       .allianceRelativeControl(true);
+      
 
     
 
@@ -181,8 +185,16 @@ public class RobotContainer {
     Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
         driveDirectAngleKeyboard);
 
-    elevator.setDefaultCommand(elevator.elevHoldCommand());
-    angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
+
+    Command driveManipulated = drivebase.driveCommand(
+      ()->Preferences.getDouble("s_transX", 0),
+      ()->Preferences.getDouble("s_transY", 0),
+      ()->Preferences.getDouble("s_angular", 0)
+      );
+
+
+    //elevator.setDefaultCommand(elevator.elevHoldCommand());
+    //angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
     otReis.setDefaultCommand(otReis.OtReisStop());
 
     if (Robot.isSimulation()) {
@@ -196,31 +208,45 @@ public class RobotContainer {
 
       drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
 
+      driver2.povDown().whileTrue(elevator.manualDownCommand()).onFalse(elevator.manualStopCommand());
+      driver2.povUp().whileTrue(elevator.manualUpCommand()).onFalse(elevator.manualStopCommand());
       //Set elevator as setpoints
-      driver2.a()
-      .onTrue(angleSubsystem.setArmSafe()
-      .andThen(elevator.setgoal(0))
-      );
-      driver2.b()
-      .onTrue(angleSubsystem.setArmSafe()
-      .andThen(elevator.setgoal(1.5))
-      );
-      driver2.y()
-      .onTrue(angleSubsystem.setArmSafe()
-      .andThen(elevator.setgoal(3))
-      );
-      driver2.x()
-      .onTrue(angleSubsystem.setArmSafe()
-      .andThen(elevator.setgoal(4.4))
-      );
-      //Driver 1 (Controller, swerve)
+      
+      driver2.a().onTrue(new safeElevator(elevator,angleSubsystem,0));
+      driver2.b().onTrue(new safeElevator(elevator,angleSubsystem,1.5));
+      driver2.y().onTrue(new safeElevator(elevator,angleSubsystem,2.5));
+      driver2.x().onTrue(new safeElevator(elevator,angleSubsystem,ElevatorConstants.maxPosition));
+
+      driver2.leftBumper().whileTrue(angleSubsystem.armDown()).whileFalse(angleSubsystem.armStop());
+      driver2.rightBumper().whileTrue(angleSubsystem.armUp()).whileFalse(angleSubsystem.armStop());
+
+      driver2.povLeft().onTrue(angleSubsystem.setAngleCommand(0));
+      driver2.povRight().onTrue(angleSubsystem.setAngleCommand(0.61));
+
+      driver2.leftTrigger().whileTrue(otReis.OtReisIntake());
+      driver2.rightTrigger().whileTrue(otReis.OtReisShooter());
+      /*
+      driver2.b().onTrue(new safeElevator(elevator,2));
+      driver2.y().onTrue(new safeElevator(elevator,3));
+      driver2.x().onTrue(new safeElevator(elevator,4));
+
+      driver2.back().onTrue(new safeElevator(elevator, 0));
+      */
+
+      //Driver 1 (Controller, swerve)p
 
       //Yaw will follow the closest
+      /*
       driver1.cross()
         .whileTrue(Commands.run(()->aimAtBestTargetPID()))
         .whileFalse(Commands.run(()->drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity)));
 
       driver1.circle().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
+      */
+
+
+      driver1.cross()
+        .whileTrue(Commands.run(()->vision.yawDrive(drivebase,driver1)));
 
       /*
       driver1.triangle()
