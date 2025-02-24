@@ -30,7 +30,6 @@ import frc.robot.Constants.OperatorConstants;
 import frc.robot.subsystems.arm.AngleSubsystem;
 import frc.robot.subsystems.arm.OtReisSubsystem;
 import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.led.LedSubsystem;
 //import frc.robot.subsystems.elevator.ElevatorSubsystem;
 // garip hata import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
@@ -60,19 +59,17 @@ import swervelib.SwerveInputStream;
  */
 public class RobotContainer {
 
-  int currentElevatorIndex = 0;
-
   final CommandPS5Controller driver1 = new CommandPS5Controller(0);
   final CommandXboxController driver2 = new CommandXboxController(1);
-  private double swerveSpeed = 0.5;
-  private double swerveYawSpeed = 0.5;
+  private double swerveSpeed = 0.25;
+  private double swerveYawSpeed = 0.25;
 
   private final SwerveSubsystem drivebase = new SwerveSubsystem(
       new File(Filesystem.getDeployDirectory(), "swerve"));
 
   private final Elevator elevator = new Elevator();
   private final AngleSubsystem angleSubsystem = new AngleSubsystem();
-  private final LedSubsystem s_led = new LedSubsystem(elevator);
+  //private final LedSubsystem s_led = new LedSubsystem();
   private final OtReisSubsystem otReis = new OtReisSubsystem();
   private final VisionSubsystem vision = new VisionSubsystem();
 
@@ -87,11 +84,12 @@ public class RobotContainer {
   // SWERVELER
 
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-      () -> driver1.getLeftY() * -1 * swerveSpeed,
-      () -> driver1.getLeftX() * -1 * swerveSpeed)
-      .withControllerRotationAxis(()->driver1.getRightX()*swerveYawSpeed)
+      () -> driver1.getLeftY() * -1,
+      () -> driver1.getLeftX() * -1)
+      .withControllerRotationAxis(driver1::getRightX)
       .deadband(OperatorConstants.DEADBAND)
-      .scaleTranslation(0.8)
+      .scaleTranslation(swerveSpeed)
+      .scaleRotation(swerveYawSpeed)
       .allianceRelativeControl(true);
 
     
@@ -183,18 +181,8 @@ public class RobotContainer {
     Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
         driveDirectAngleKeyboard);
 
-    Command driveFieldOrientedDA = drivebase.driveCommand(
-      ()->MathUtil.applyDeadband(driver1.getLeftY(), Constants.OperatorConstants.LEFT_Y_DEADBAND), 
-      ()->MathUtil.applyDeadband(driver1.getLeftX(), Constants.OperatorConstants.LEFT_X_DEADBAND), 
-      ()->driver1.getRightX(),
-      ()->driver1.getRightY()
-      );
-
-
-
     elevator.setDefaultCommand(elevator.elevHoldCommand());
     angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
-  
     otReis.setDefaultCommand(otReis.OtReisStop());
 
     if (Robot.isSimulation()) {
@@ -209,34 +197,29 @@ public class RobotContainer {
       drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
 
       //Set elevator as setpoints
-      /*
-      driver2.leftBumper()
-        .onTrue(Commands.runOnce(()->DecreaseIndex())
-        .andThen(elevator.setgoal(ElevatorConstants.states[currentElevatorIndex])));
+      driver2.a()
+      .onTrue(angleSubsystem.setArmSafe()
+      .andThen(elevator.setgoal(0))
+      );
+      driver2.b()
+      .onTrue(angleSubsystem.setArmSafe()
+      .andThen(elevator.setgoal(1.5))
+      );
+      driver2.y()
+      .onTrue(angleSubsystem.setArmSafe()
+      .andThen(elevator.setgoal(3))
+      );
+      driver2.x()
+      .onTrue(angleSubsystem.setArmSafe()
+      .andThen(elevator.setgoal(4.4))
+      );
+      //Driver 1 (Controller, swerve)
 
-      driver2.rightBumper()
-        .onTrue(Commands.runOnce(()->IncreaseIndex())
-        .andThen(elevator.setgoal(ElevatorConstants.states[currentElevatorIndex])));,
-        */
+      //Yaw will follow the closest
+      driver1.cross()
+        .whileTrue(Commands.run(()->aimAtBestTargetPID()))
+        .whileFalse(Commands.run(()->drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity)));
 
-      driver2.leftTrigger().whileTrue(otReis.OtReisSetCommand(driver2.getLeftTriggerAxis()*-0.8));
-      driver2.rightTrigger().whileTrue(otReis.OtReisSetCommand(driver2.getRightTriggerAxis()*0.8));
-      driver2.povRight().whileTrue(otReis.OtReisIntake());
-      driver2.povLeft().whileTrue(otReis.OtReisShooter());
-
-
-      driver2.x().onTrue(elevator.setgoal(0));
-      driver2.b().onTrue(elevator.setgoal(3));
-      driver2.povUp().whileTrue(elevator.manualUpCommand());
-      driver2.povDown().whileTrue(elevator.manualDownCommand());
-
-      driver2.a().onTrue(angleSubsystem.setAngleAsRotationCommand(Rotation2d.fromDegrees(0)));
-      driver2.y().onTrue(angleSubsystem.setAngleAsRotationCommand(Rotation2d.fromDegrees(0.69)));
-
-
-
-      //SWERVE
-      driver1.cross().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       driver1.circle().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
 
       /*
@@ -282,32 +265,16 @@ public class RobotContainer {
     drivebase.setDefaultCommand(driveAimCommand);
   }
 
-  public void IncreaseIndex(){
-    int stateLenght = ElevatorConstants.states.length-1;
-    if(stateLenght>currentElevatorIndex){
-      currentElevatorIndex+=1;
-    }
-  }
-
-  public void DecreaseIndex(){
-    if(currentElevatorIndex>0){
-      currentElevatorIndex-=1;
-    }
-  }
-
   public void aimAtBestTargetPID() {
     PhotonTrackedTarget id = vision.bestTarget();
 
     double getGoal = MathUtil.clamp(vision.getLastestPID().calculate(drivebase.getPose().getRotation().getRadians(), Math.toRadians(id.getYaw())), -1, 1);
 
-    Rotation2d goalRotation = new Rotation2d(getGoal);
-
     SwerveInputStream driveVelocityAim = SwerveInputStream.of(drivebase.getSwerveDrive(),
       () -> driver1.getLeftY() * -1,
       () -> driver1.getLeftX() * -1)
-      .headingOffset(goalRotation)
+      .withControllerRotationAxis(()->getGoal)
       .deadband(OperatorConstants.DEADBAND)
-      .scaleTranslation(swerveSpeed)
       .allianceRelativeControl(true);
 
     

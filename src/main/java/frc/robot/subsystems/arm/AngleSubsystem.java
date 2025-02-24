@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
+import frc.robot.subsystems.elevator.Elevator;
 
 public class AngleSubsystem  extends SubsystemBase{
     private SparkMax angleMotor;
@@ -37,8 +38,9 @@ public class AngleSubsystem  extends SubsystemBase{
     private double setpoint;
 
 
+
     public AngleSubsystem() {
-        //Device ID will be changed.
+        //Device ID will be changed.    
         angleMotor = new SparkMax(ArmConstants.kAnglePort, MotorType.kBrushless);
 
         //Let's initilaze the closed loop control
@@ -139,6 +141,11 @@ public class AngleSubsystem  extends SubsystemBase{
 
     public Command resetEncoder(){
         return run(()->encoder.setPosition(0));
+    }
+
+
+    public Command setArmSafe(){
+        return run(()->SetAngle(2));
     }
 
 

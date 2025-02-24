@@ -25,73 +25,57 @@ import swervelib.SwerveDrive;
 
 public class LedSubsystem extends SubsystemBase {
 
-  private AddressableLED s_led;
-  private AddressableLEDBuffer s_buffer;
+  private AddressableLED insideLed;
+  private AddressableLEDBuffer insideLed_buffer;
 
-  private AddressableLEDBufferView s_buffer_left;
-  private AddressableLEDBufferView s_buffer_right;
-  private AddressableLEDBufferView s_buffer_middle;
+  private AddressableLEDBufferView insideLed_buffer_left;
+  private AddressableLEDBufferView insideLed_buffer_right;
+  private AddressableLEDBufferView insideLed_buffer_middle;
 
-  private final LEDPattern rainbow = LEDPattern.rainbow(255, 128);
-  private static final Distance ledspace = Meters.of(1/120.0);
-  private final LEDPattern scroll = rainbow.scrollAtAbsoluteSpeed(MetersPerSecond.of(1), ledspace);
+  private AddressableLED elevLed;
+  private AddressableLEDBuffer elevLed_buffer;
+  private int elevLedLenght = 200;
 
-  private int lenght = 74+48+2;
+  private int Insidelenght = 74+48+2;
   private Elevator elevSub;
 
+  private final Distance InsideSpace = Meters.of(1/Insidelenght);
+
   public LedSubsystem(Elevator s_elevator) {
-    //PWM port
-     s_led = new AddressableLED(0);
-     //Lenght
-     s_buffer = new AddressableLEDBuffer(lenght);
-     s_led.setLength(s_buffer.getLength());
+    //Insider led
+     insideLed = new AddressableLED(0);
+     insideLed_buffer = new AddressableLEDBuffer(Insidelenght);
+     insideLed.setLength(insideLed_buffer.getLength());
+
+     elevSub = s_elevator;
+  
+     insideLed_buffer_left = insideLed_buffer.createView(0, 47);
+     insideLed_buffer_middle = insideLed_buffer.createView(48, 73);
+     insideLed_buffer_right = insideLed_buffer.createView(74, 74+48).reversed();
+    
+     insideLed.start();
+
+
+     //Elevator Led
+     elevLed = new AddressableLED(1);
+     elevLed_buffer = new AddressableLEDBuffer(Insidelenght);
+     
 
      elevSub = s_elevator;
 
-     //Experimental, may use later.
-  
-     s_buffer_left = s_buffer.createView(0, 47);
-     s_buffer_middle = s_buffer.createView(48, 73);
-     s_buffer_right = s_buffer.createView(74, 74+48).reversed();
-     s_led.setLength(s_buffer.getLength());
-    
-
-    LEDPattern baseOrange = LEDPattern.solid(Color.kCrimson);
-    LEDPattern baseAqua = LEDPattern.solid(Color.kSeaGreen);
-    LEDPattern baseBlue = LEDPattern.solid(Color.kDarkSeaGreen);
-
-    LEDPattern zero = LEDPattern.solid(Color.kBlack);
-
-    zero.applyTo(s_buffer);
-
-    //baseOrange.applyTo(s_buffer_left);
-    //baseAqua.applyTo(s_buffer_right);
-    baseBlue.applyTo(s_buffer_middle);
-    s_led.setData(s_buffer);
-    s_led.start();
   }
 
 
   @Override
   public void periodic() {
-    LEDPattern pattern = LEDPattern.progressMaskLayer(()-> elevSub.getPosition()/ElevatorConstants.maxPosition);
-    pattern.applyTo(s_buffer_left);
-    pattern.applyTo(s_buffer_right);
-    s_led.setData(s_buffer);
+    
   }
 
   public Command runPattern(LEDPattern pattern){
     return run(()->{
-      pattern.applyTo(s_buffer);
+      pattern.applyTo(insideLed_buffer);
     });
   }
 
-  public Command Blue(){
-    return(run(()->{
-      LEDPattern base = LEDPattern.solid(Color.kBlue);
-      //LEDPattern pattern = base.breathe(Seconds.of(2));
 
-      base.applyTo(s_buffer);
-    }));
-  }
 }
