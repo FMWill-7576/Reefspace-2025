@@ -90,11 +90,7 @@ public class AngleSubsystem  extends SubsystemBase{
             angle, 
             ControlType.kPosition,
             ClosedLoopSlot.kSlot0,
-<<<<<<< HEAD
-            feedforward.calculate(encoder.getPosition(),0.2),
-=======
             getArmFeedforward().calculate(encoder.getPosition(),0.5),
->>>>>>> 06bab83b4324967b99e22e57159f6bbf3647a151
             ArbFFUnits.kVoltage
         ); 
     }
@@ -163,11 +159,7 @@ public class AngleSubsystem  extends SubsystemBase{
 
 
     public Command setArmSafe(){
-<<<<<<< HEAD
         return run(()->SetAngle(2)).until(()->IsAtDesiredPosition(2));
-=======
-        return run(()->SetAngle(0.61));
->>>>>>> 06bab83b4324967b99e22e57159f6bbf3647a151
     }
 
     public void setupPreferences() {

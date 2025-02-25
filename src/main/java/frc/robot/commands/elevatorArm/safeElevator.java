@@ -8,7 +8,7 @@ public class safeElevator extends SequentialCommandGroup
 {
     public safeElevator(Elevator elevator,AngleSubsystem angle,double goal) {
         addCommands(
-            //angle.setArmSafe(),
+            angle.setArmSafe(),
             elevator.setgoal(goal)
         );
     }

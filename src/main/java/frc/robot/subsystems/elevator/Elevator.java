@@ -106,16 +106,14 @@ public class Elevator extends SubsystemBase {
     if(currentIndex<ElevatorConstants.states.length-1){
       currentIndex = currentIndex+1;
     }
-    //return this.run(()->setPosition(ElevatorConstants.states[currentIndex]));
-    return run(()->{});
+    return this.run(()->setPosition(ElevatorConstants.states[currentIndex])).until(()->IsAtDesiredHeight(ElevatorConstants.states[currentIndex]));
   }
 
   public Command StateDownCommand(){
     if(currentIndex>0){
       currentIndex = currentIndex - 1;
     }
-    //return this.run(()->setPosition(ElevatorConstants.states[currentIndex]));
-    return run(()->{});
+    return this.run(()->setPosition(ElevatorConstants.states[currentIndex])).until(()->IsAtDesiredHeight(ElevatorConstants.states[currentIndex]));
   }
 
 
