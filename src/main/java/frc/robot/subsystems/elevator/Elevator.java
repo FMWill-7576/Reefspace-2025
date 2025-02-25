@@ -94,9 +94,8 @@ public class Elevator extends SubsystemBase {
     double currentPos = angle.getEncoder();
   }
 
-  public BooleanSupplier IsAtDesiredHeightAsBooleanSupplier(double height, double tolerance){
-    BooleanSupplier a = ()-> MathUtil.isNear(height, boreEncoder.getPosition(), tolerance);
-    return a;
+  public boolean IsAtDesiredHeight(double height){
+    return MathUtil.isNear(height, boreEncoder.getPosition(), 0.1);
   }
 
   public double getCurrentSetpoint() {
@@ -130,7 +129,7 @@ public class Elevator extends SubsystemBase {
   }
 
   public Command setgoal(double goal) {
-    return run(() -> setPosition(goal));
+    return run(() -> setPosition(goal)).until(()->IsAtDesiredHeight(goal));
   }
 
   public Command manualUpCommand() {

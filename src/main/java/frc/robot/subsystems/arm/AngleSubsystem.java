@@ -19,6 +19,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -84,13 +85,12 @@ public class AngleSubsystem  extends SubsystemBase{
 
 
     public void SetAngle(double angle){
-        //derece, kontrol türü, slot, feedforward!!!! ileride feedforward gerekebilir
         setpoint = angle;
         angleClosedLoopController.setReference(
             angle, 
             ControlType.kPosition,
             ClosedLoopSlot.kSlot0,
-            feedforward.calculate(encoder.getPosition(),0),
+            feedforward.calculate(encoder.getPosition(),0.2),
             ArbFFUnits.kVoltage
         ); 
     }
@@ -143,9 +143,13 @@ public class AngleSubsystem  extends SubsystemBase{
         return run(()->encoder.setPosition(0));
     }
 
+    public boolean IsAtDesiredPosition(double pos){
+        return (MathUtil.isNear(pos, getEncoder(), 0.1));
+    }
+
 
     public Command setArmSafe(){
-        return run(()->SetAngle(2));
+        return run(()->SetAngle(2)).until(()->IsAtDesiredPosition(2));
     }
 
 
