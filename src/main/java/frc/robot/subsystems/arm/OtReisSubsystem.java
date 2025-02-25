@@ -28,15 +28,15 @@ public class OtReisSubsystem extends SubsystemBase{
     }
 
     public Command OtReisShooter(){
-        return run(()->shooterMotor.set(0.5));
+        return run(()->shooterMotor.set(-1));
     }
 
     public Command OtReisIntake(){
-        return run(()->shooterMotor.set(-0.5));
+        return run(()->shooterMotor.set(0.5));
     }
 
     public Command OtReisStop(){
-        return run(()->shooterMotor.set(-0.1));
+        return run(()->shooterMotor.set(0.1));
     }
 
     public Command OtReisSetCommand(double goal){

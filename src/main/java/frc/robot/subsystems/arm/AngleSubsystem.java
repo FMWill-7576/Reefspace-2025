@@ -23,19 +23,19 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
-import frc.robot.subsystems.elevator.Elevator;
 
 public class AngleSubsystem  extends SubsystemBase{
     private SparkMax angleMotor;
     private SparkMaxConfig angleMotorConfig;
     private SparkClosedLoopController angleClosedLoopController;
     private RelativeEncoder encoder;
-    private ArmFeedforward feedforward = new ArmFeedforward(ArmConstants.kS,ArmConstants.kG,ArmConstants.kV);
+    //private ArmFeedforward feedforward = new ArmFeedforward(ArmConstants.kS,ArmConstants.kG,ArmConstants.kV);
     private double setpoint;
 
 
@@ -68,18 +68,18 @@ public class AngleSubsystem  extends SubsystemBase{
             //PID section
             .pid(1,0,0.5,ClosedLoopSlot.kSlot0)
             //from the example, idk what does it do
-            .outputRange(-0.3, 0.3);
+            .outputRange(-0.1, 0.1);
 
         
         angleMotorConfig.softLimit
             .reverseSoftLimitEnabled(true)
             .reverseSoftLimit(0)
             .forwardSoftLimitEnabled(true)
-            .forwardSoftLimit(0.8);
+            .forwardSoftLimit(2);
         
         
         angleMotor.configure(angleMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters); 
-        
+        setupPreferences();
         encoder.setPosition(0);
     }
 
@@ -90,9 +90,23 @@ public class AngleSubsystem  extends SubsystemBase{
             angle, 
             ControlType.kPosition,
             ClosedLoopSlot.kSlot0,
+<<<<<<< HEAD
             feedforward.calculate(encoder.getPosition(),0.2),
+=======
+            getArmFeedforward().calculate(encoder.getPosition(),0.5),
+>>>>>>> 06bab83b4324967b99e22e57159f6bbf3647a151
             ArbFFUnits.kVoltage
         ); 
+    }
+
+    public ArmFeedforward getArmFeedforward() {
+
+       ArmFeedforward a =  new ArmFeedforward(
+        Preferences.getDouble("arm_kS", ArmConstants.kS),
+        Preferences.getDouble("arm_kG", ArmConstants.kG),
+        Preferences.getDouble("arm_kV", ArmConstants.kV)
+        );
+       return a;
     }
 
     public void SetAngleRotation(Rotation2d angle){
@@ -102,7 +116,7 @@ public class AngleSubsystem  extends SubsystemBase{
             angle.getDegrees(), 
             ControlType.kPosition,
             ClosedLoopSlot.kSlot0,
-            feedforward.calculate(angle.getRadians(),0),
+            getArmFeedforward().calculate(angle.getRadians(),0),
             ArbFFUnits.kVoltage
         ); 
     }
@@ -129,14 +143,14 @@ public class AngleSubsystem  extends SubsystemBase{
     }
 
     public Command armUp(){
-        return run(()->angleMotor.set(0.1));
+        return run(()->angleMotor.set(0.2));
     }
     public Command armStop(){
         return run(()->angleMotor.set(0));
     }
 
     public Command armDown(){
-        return run(()->angleMotor.set(-0.1));
+        return run(()->angleMotor.set(-0.2));
     }
 
     public Command resetEncoder(){
@@ -149,9 +163,18 @@ public class AngleSubsystem  extends SubsystemBase{
 
 
     public Command setArmSafe(){
+<<<<<<< HEAD
         return run(()->SetAngle(2)).until(()->IsAtDesiredPosition(2));
+=======
+        return run(()->SetAngle(0.61));
+>>>>>>> 06bab83b4324967b99e22e57159f6bbf3647a151
     }
 
+    public void setupPreferences() {
+        Preferences.initDouble("arm_kS", ArmConstants.kS);
+        Preferences.initDouble("arm_kV", ArmConstants.kV);
+        Preferences.initDouble("arm_kG", ArmConstants.kG);
+    }
 
     @Override
     public void periodic() {

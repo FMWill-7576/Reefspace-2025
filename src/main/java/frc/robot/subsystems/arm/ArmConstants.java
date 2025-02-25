@@ -14,7 +14,7 @@ public class ArmConstants {
 
     public static double kAngleRatio = 43.6;
 
-    public static double homeForwardLimit = 0.36;
+    public static double homeForwardLimit = 0.8;
 
     //Tuning
     public static double kG = 0.2;
