@@ -18,13 +18,18 @@ public class VisionConstants {
     public static String kI_string = "kI_vision";
     public static String kD_string = "kD_vision";
 
+    public static double pitch = 2;
+    public static double yaw = -18;
+    public static double height = 0;
+
     //System
 
     public static double cameraHeigthtMeters = 1;
     public static double cameraPitchInRadians = Units.degreesToRadians(30);
 
+    //delete 12 afterward!
     public static int[] reefIDs = {
-        6,7,8,9,10,11,
+        6,7,8,9,10,11,12,
 
         17,18,19,20,21,22
     };

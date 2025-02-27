@@ -29,7 +29,9 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.Preferences;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.elevatorArm.safeElevator;
+import frc.robot.commands.elevatorArm.setElevatorState;
 import frc.robot.subsystems.arm.AngleSubsystem;
+import frc.robot.subsystems.arm.ArmConstants;
 import frc.robot.subsystems.arm.OtReisSubsystem;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorConstants;
@@ -67,12 +69,14 @@ public class RobotContainer {
   private double swerveSpeed = 0.25;
   private double swerveYawSpeed = 0.25;
 
+  public int elevState = 0;
+
   private final SwerveSubsystem drivebase = new SwerveSubsystem(
       new File(Filesystem.getDeployDirectory(), "swerve"));
 
   private final Elevator elevator = new Elevator();
   private final AngleSubsystem angleSubsystem = new AngleSubsystem();
-  //private final LedSubsystem s_led = new LedSubsystem();
+  private final LedSubsystem s_led = new LedSubsystem(elevator);
   private final OtReisSubsystem otReis = new OtReisSubsystem();
   private final VisionSubsystem vision = new VisionSubsystem();
 
@@ -197,6 +201,8 @@ public class RobotContainer {
     //angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
     otReis.setDefaultCommand(otReis.OtReisStop());
 
+    angleSubsystem.SetAngle(ArmConstants.homeSetpoint);
+
     if (Robot.isSimulation()) {
       drivebase.setDefaultCommand(driveFieldOrientedDirectAngleKeyboard);
     }
@@ -211,27 +217,40 @@ public class RobotContainer {
       driver2.povDown().whileTrue(elevator.manualDownCommand()).onFalse(elevator.manualStopCommand());
       driver2.povUp().whileTrue(elevator.manualUpCommand()).onFalse(elevator.manualStopCommand());
       //Set elevator as setpoints
-      
-      driver2.a().onTrue(new safeElevator(elevator,angleSubsystem,0));
-      driver2.b().onTrue(new safeElevator(elevator,angleSubsystem,1.5));
-      driver2.y().onTrue(new safeElevator(elevator,angleSubsystem,2.5));
-      driver2.x().onTrue(new safeElevator(elevator,angleSubsystem,ElevatorConstants.maxPosition));
+    
 
-      driver2.leftBumper().whileTrue(angleSubsystem.armDown()).whileFalse(angleSubsystem.armStop());
-      driver2.rightBumper().whileTrue(angleSubsystem.armUp()).whileFalse(angleSubsystem.armStop());
+      /*
+      driver2.leftBumper()
+        .onTrue(Commands.runOnce(()->{
+          if(0<elevState){
+            elevState-=1;
+          }
+        })
+        .andThen(new safeElevator(elevator, angleSubsystem, ElevatorConstants.states[elevState])));
 
-      driver2.povLeft().onTrue(angleSubsystem.setAngleCommand(0));
+        driver2.rightBumper()
+        .onTrue(Commands.runOnce(()->{
+          if(elevState<ElevatorConstants.states.length){
+            elevState+=1;
+          }
+        })
+        .andThen(new safeElevator(elevator, angleSubsystem, ElevatorConstants.states[elevState])));
+      */
+
+      driver2.povLeft().onTrue(angleSubsystem.setAngleCommand(ArmConstants.homeSetpoint));
       driver2.povRight().onTrue(angleSubsystem.setAngleCommand(0.61));
 
       driver2.leftTrigger().whileTrue(otReis.OtReisIntake());
       driver2.rightTrigger().whileTrue(otReis.OtReisShooter());
-      /*
-      driver2.b().onTrue(new safeElevator(elevator,2));
-      driver2.y().onTrue(new safeElevator(elevator,3));
-      driver2.x().onTrue(new safeElevator(elevator,4));
 
-      driver2.back().onTrue(new safeElevator(elevator, 0));
-      */
+      driver2.a().onTrue(new safeElevator(elevator,angleSubsystem,0));
+      driver2.b().onTrue(new safeElevator(elevator,angleSubsystem,2));
+      driver2.y().onTrue(new safeElevator(elevator,angleSubsystem,3));
+      driver2.x().onTrue(new safeElevator(elevator,angleSubsystem,4));
+
+      driver2.leftBumper().whileTrue(angleSubsystem.armDown()).whileFalse(angleSubsystem.armStop());
+      driver2.rightBumper().whileTrue(angleSubsystem.armUp()).whileFalse(angleSubsystem.armStop());
+
 
       //Driver 1 (Controller, swerve)p
 
@@ -313,7 +332,5 @@ public class RobotContainer {
     PhotonTrackedTarget id = vision.bestTarget();
     double radianYaw = vision.getAprilTagYawAsRadian(id.getFiducialId());
   }
-
-
 
 }

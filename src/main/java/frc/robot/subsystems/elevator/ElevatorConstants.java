@@ -19,7 +19,7 @@ public class ElevatorConstants {
 
     public static double kP = 0.9;
     public static double kI = 0;
-    public static double kD = 1.2;
+    public static double kD = 1;
 
     public static double minOutput = -0.6;
     public static double maxOutput = 0.95;
@@ -35,5 +35,6 @@ public class ElevatorConstants {
         1.5,
         3.0,
         4.4,
+        ElevatorConstants.maxPosition,
     };
 }

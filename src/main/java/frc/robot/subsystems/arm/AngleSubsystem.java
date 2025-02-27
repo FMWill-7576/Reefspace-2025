@@ -19,6 +19,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -67,7 +68,7 @@ public class AngleSubsystem  extends SubsystemBase{
             //PID section
             .pid(1,0,0.5,ClosedLoopSlot.kSlot0)
             //from the example, idk what does it do
-            .outputRange(-0.1, 0.1);
+            .outputRange(-0.3, 0.3);
 
         
         angleMotorConfig.softLimit
@@ -84,7 +85,6 @@ public class AngleSubsystem  extends SubsystemBase{
 
 
     public void SetAngle(double angle){
-        //derece, kontrol türü, slot, feedforward!!!! ileride feedforward gerekebilir
         setpoint = angle;
         angleClosedLoopController.setReference(
             angle, 
@@ -122,7 +122,7 @@ public class AngleSubsystem  extends SubsystemBase{
     }
 
     public Command setAngleCommand(double goal) {
-        return run(()-> SetAngle(goal));
+        return run(()-> SetAngle(goal)).until(()->IsAtDesiredPosition(goal));
     }
 
     public Command setAngleAsRotationCommand(Rotation2d goal) {
@@ -153,9 +153,17 @@ public class AngleSubsystem  extends SubsystemBase{
         return run(()->encoder.setPosition(0));
     }
 
+    public boolean IsAtDesiredPosition(double pos){
+        return (MathUtil.isNear(pos, getEncoder(), 0.1));
+    }
+
+    public Command setArmHome(){
+        return setAngleCommand(ArmConstants.homeSetpoint);
+    }
+
 
     public Command setArmSafe(){
-        return run(()->SetAngle(0.61));
+        return run(()->SetAngle(2)).until(()->IsAtDesiredPosition(2));
     }
 
     public void setupPreferences() {
@@ -163,7 +171,6 @@ public class AngleSubsystem  extends SubsystemBase{
         Preferences.initDouble("arm_kV", ArmConstants.kV);
         Preferences.initDouble("arm_kG", ArmConstants.kG);
     }
-
     @Override
     public void periodic() {
         SmartDashboard.putNumber("Arm Position", encoder.getPosition());

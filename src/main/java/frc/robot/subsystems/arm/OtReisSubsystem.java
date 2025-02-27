@@ -9,7 +9,9 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 
 public class OtReisSubsystem extends SubsystemBase{
 
@@ -31,12 +33,16 @@ public class OtReisSubsystem extends SubsystemBase{
         return run(()->shooterMotor.set(-1));
     }
 
+    public Command TimedShooter(){
+        return OtReisIntake().withTimeout(1);
+    }
+
     public Command OtReisIntake(){
-        return run(()->shooterMotor.set(0.5));
+        return run(()->shooterMotor.set(1));
     }
 
     public Command OtReisStop(){
-        return run(()->shooterMotor.set(0.1));
+        return runOnce(()->shooterMotor.set(0));
     }
 
     public Command OtReisSetCommand(double goal){

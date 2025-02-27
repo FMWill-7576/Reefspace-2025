@@ -12,6 +12,7 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -43,7 +44,7 @@ public class VisionSubsystem extends SubsystemBase {
     double final_kD = VisionConstants.kD;
 
     public VisionSubsystem() {
-        camera = new PhotonCamera("7576vision");
+        camera = new PhotonCamera("cam7576");
         AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
         robotToCam = new Transform3d(new Translation3d(0.5, 0.0, 0.5), new Rotation3d(0, 0, 0)); // facing forward,
                                                                                                  // 0.5meter forward of
@@ -136,9 +137,13 @@ public class VisionSubsystem extends SubsystemBase {
             swerve.driveCommand(
                     () -> controller.getLeftY() * 0.25,
                     () -> controller.getLeftX() * -1,
-                    () -> turn);
+                    () -> MathUtil.clamp(turn,0,1)*0.2);
             turnPID.close();
         }
+    }
+
+    public boolean IsAtDesiredYaw(double desired,double actual){
+        return MathUtil.isNear(desired, actual, 0.1);
     }
 
     @Override

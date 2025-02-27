@@ -43,7 +43,7 @@ public class Elevator extends SubsystemBase {
     mainConfig
         .inverted(true)
         .smartCurrentLimit(ElevatorConstants.smartCurrent)
-        .idleMode(IdleMode.kCoast)
+        .idleMode(IdleMode.kBrake)
         .openLoopRampRate(0.25)
         .closedLoopRampRate(0.15)
         .softLimit
@@ -89,13 +89,8 @@ public class Elevator extends SubsystemBase {
     return newFeed;
   }
 
-  public void safeElevatorSet(double setpoint, AngleSubsystem angle){
-    double currentPos = angle.getEncoder();
-  }
-
-  public BooleanSupplier IsAtDesiredHeightAsBooleanSupplier(double height, double tolerance){
-    BooleanSupplier a = ()-> MathUtil.isNear(height, boreEncoder.getPosition(), tolerance);
-    return a;
+  public boolean IsAtDesiredHeight(double height){
+    return MathUtil.isNear(height, boreEncoder.getPosition(), 0.1);
   }
 
   public double getCurrentSetpoint() {
@@ -107,16 +102,14 @@ public class Elevator extends SubsystemBase {
     if(currentIndex<ElevatorConstants.states.length-1){
       currentIndex = currentIndex+1;
     }
-    //return this.run(()->setPosition(ElevatorConstants.states[currentIndex]));
-    return run(()->{});
+    return this.run(()->setPosition(ElevatorConstants.states[currentIndex])).until(()->IsAtDesiredHeight(ElevatorConstants.states[currentIndex]));
   }
 
   public Command StateDownCommand(){
     if(currentIndex>0){
       currentIndex = currentIndex - 1;
     }
-    //return this.run(()->setPosition(ElevatorConstants.states[currentIndex]));
-    return run(()->{});
+    return this.run(()->setPosition(ElevatorConstants.states[currentIndex])).until(()->IsAtDesiredHeight(ElevatorConstants.states[currentIndex]));
   }
 
 
@@ -129,7 +122,7 @@ public class Elevator extends SubsystemBase {
   }
 
   public Command setgoal(double goal) {
-    return run(() -> setPosition(goal));
+    return run(() -> setPosition(goal)).until(()->IsAtDesiredHeight(goal));
   }
 
   public Command manualUpCommand() {
@@ -161,6 +154,13 @@ public class Elevator extends SubsystemBase {
 
   public void elevVoltage(double voltage) {
     mainMotor.setVoltage(voltage);
+  }
+
+  public int getCurrentIndex() {
+    return currentIndex;
+  }
+  public void setCurrentIndex(int n) {
+    currentIndex = n;
   }
 
   public void setupPreferences(){

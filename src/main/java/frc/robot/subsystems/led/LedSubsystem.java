@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.AddressableLEDBufferView;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.LEDPattern.GradientType;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -42,6 +43,8 @@ public class LedSubsystem extends SubsystemBase {
   private final Distance InsideSpace = Meters.of(1/Insidelenght);
 
   public LedSubsystem(Elevator s_elevator) {
+    elevSub = s_elevator;
+    
     //Insider led
      insideLed = new AddressableLED(0);
      insideLed_buffer = new AddressableLEDBuffer(Insidelenght);
@@ -55,20 +58,19 @@ public class LedSubsystem extends SubsystemBase {
     
      insideLed.start();
 
-
-     //Elevator Led
-     elevLed = new AddressableLED(1);
-     elevLed_buffer = new AddressableLEDBuffer(Insidelenght);
-     
-
-     elevSub = s_elevator;
-
   }
 
 
   @Override
   public void periodic() {
-    
+    LEDPattern base = LEDPattern.gradient(GradientType.kDiscontinuous, Color.kMagenta,Color.kOrangeRed);
+    LEDPattern pat = LEDPattern.progressMaskLayer(()-> elevSub.getPosition()/ElevatorConstants.maxPosition);
+    LEDPattern display = base.mask(pat);
+
+    display.applyTo(insideLed_buffer_left);
+    display.applyTo(insideLed_buffer_right);
+
+    insideLed.setData(insideLed_buffer);
   }
 
   public Command runPattern(LEDPattern pattern){
