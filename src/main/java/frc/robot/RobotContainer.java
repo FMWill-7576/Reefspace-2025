@@ -66,8 +66,6 @@ public class RobotContainer {
 
   final CommandPS5Controller driver1 = new CommandPS5Controller(0);
   final CommandXboxController driver2 = new CommandXboxController(1);
-  private double swerveSpeed = 0.25;
-  private double swerveYawSpeed = 0.25;
 
   public int elevState = 0;
 
@@ -95,8 +93,8 @@ public class RobotContainer {
       () -> driver1.getLeftX() * -1)
       .withControllerRotationAxis(driver1::getRightX)
       .deadband(OperatorConstants.DEADBAND)
-      .scaleTranslation(swerveSpeed)
-      .scaleRotation(swerveYawSpeed)
+      .scaleTranslation(Constants.OperatorConstants.swerveSpeed)
+      .scaleRotation(Constants.OperatorConstants.swerveYawSpeed)
       .allianceRelativeControl(true);
       
 
@@ -243,10 +241,10 @@ public class RobotContainer {
       driver2.leftTrigger().whileTrue(otReis.OtReisIntake());
       driver2.rightTrigger().whileTrue(otReis.OtReisShooter());
 
-      driver2.a().onTrue(new safeElevator(elevator,angleSubsystem,0));
-      driver2.b().onTrue(new safeElevator(elevator,angleSubsystem,2));
-      driver2.y().onTrue(new safeElevator(elevator,angleSubsystem,3));
-      driver2.x().onTrue(new safeElevator(elevator,angleSubsystem,4));
+      driver2.a().onTrue(new setElevatorState(elevator,angleSubsystem,1));
+      driver2.b().onTrue(new setElevatorState(elevator,angleSubsystem,2));
+      driver2.y().onTrue(new setElevatorState(elevator,angleSubsystem,3));
+      driver2.x().onTrue(new setElevatorState(elevator,angleSubsystem,4));
 
       driver2.leftBumper().whileTrue(angleSubsystem.armDown()).whileFalse(angleSubsystem.armStop());
       driver2.rightBumper().whileTrue(angleSubsystem.armUp()).whileFalse(angleSubsystem.armStop());
@@ -265,7 +263,9 @@ public class RobotContainer {
 
 
       driver1.cross()
-        .whileTrue(Commands.run(()->vision.yawDrive(drivebase,driver1)));
+        .whileTrue(vision.yawDrive(drivebase,driver1));
+
+      driver1.circle().onTrue(drivebase.setHeadingCorrectionTrue()).onFalse(drivebase.setHeadingCorrectionFalse());
 
       /*
       driver1.triangle()

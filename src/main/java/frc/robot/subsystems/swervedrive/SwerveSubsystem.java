@@ -739,4 +739,13 @@ public class SwerveSubsystem extends SubsystemBase
   {
     return swerveDrive;
   }
+
+  //CUSTOMLAR
+
+  public Command setHeadingCorrectionTrue(){
+    return run(()->swerveDrive.setHeadingCorrection(true));
+  }
+  public Command setHeadingCorrectionFalse(){
+    return run(()->swerveDrive.setHeadingCorrection(false));
+  }
 }

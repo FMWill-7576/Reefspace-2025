@@ -3,6 +3,7 @@ package frc.robot.subsystems.arm;
 import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.units.measure.Distance;
+import frc.robot.subsystems.elevator.ElevatorConstants;
 
 public class ArmConstants {
     //meters
@@ -26,6 +27,14 @@ public class ArmConstants {
     public static double kS = 0;
     double[] setpoints = {
         0,
+    };
+
+    //Presets
+    public static double[] states = {
+        homeSetpoint,
+        0.2204,
+        0.242,
+        0.2781,
     };
     
 }

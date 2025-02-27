@@ -32,9 +32,8 @@ public class ElevatorConstants {
     //Presets
     public static double[] states = {
         0.0,
-        1.5,
-        3.0,
-        4.4,
+        0.83323,
+        2.30,
         ElevatorConstants.maxPosition,
     };
 }

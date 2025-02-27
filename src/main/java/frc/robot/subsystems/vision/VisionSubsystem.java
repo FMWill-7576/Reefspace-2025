@@ -1,5 +1,6 @@
 package frc.robot.subsystems.vision;
 
+import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,13 +17,17 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import frc.robot.Constants.OperatorConstants;
+import frc.robot.Constants;
 import frc.robot.eUtil;
 import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
@@ -42,6 +47,9 @@ public class VisionSubsystem extends SubsystemBase {
     double final_kP = VisionConstants.kP;
     double final_kI = VisionConstants.kI;
     double final_kD = VisionConstants.kD;
+
+    PIDController turnPID = new PIDController(1, 0, 0);
+    PIDController forwardPID = new PIDController(1, 0, 0);
 
     public VisionSubsystem() {
         camera = new PhotonCamera("cam7576");
@@ -98,20 +106,16 @@ public class VisionSubsystem extends SubsystemBase {
             }
         }
         if (targetVisible == true) {
-            PIDController forwardPID = new PIDController(1, 0, 0);
-            PIDController turnPID = new PIDController(1, 0, 0);
             double forward = forwardPID.calculate(targetRange, 0) * -1 * 0.2;
             double turn = turnPID.calculate(targetYaw, 0) * -1 * 0.2;
             swerve.driveCommand(
                     () -> forward,
                     () -> controller.getLeftX(),
                     () -> turn);
-            turnPID.close();
-            forwardPID.close();
         }
     }
 
-    public void yawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
+    public Command yawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
         // Read in relevant data from the Camera
         boolean targetVisible = false;
         double targetYaw = 0.0;
@@ -132,17 +136,27 @@ public class VisionSubsystem extends SubsystemBase {
             }
         }
         if (targetVisible) {
-            PIDController turnPID = new PIDController(1, 0, 0);
-            double turn = turnPID.calculate(targetYaw, swerve.getPose().getRotation().getRadians());
+            double turn = MathUtil.clamp(turnPID.calculate(targetYaw, swerve.getPose().getRotation().getRadians()), -1, 1);
+            //maybeee
+            /*
             swerve.driveCommand(
                     () -> controller.getLeftY() * 0.25,
                     () -> controller.getLeftX() * -1,
-                    () -> MathUtil.clamp(turn,0,1)*0.2);
-            turnPID.close();
+                    () -> MathUtil.clamp(turn, -1, 1) * 0.2);
+            */
+            SwerveInputStream driveYaw = SwerveInputStream.of(swerve.getSwerveDrive(),
+                    () -> controller.getLeftY() * -1,
+                    () -> controller.getLeftX() * -1)
+                    .withControllerRotationAxis(()->turn * Constants.OperatorConstants.swerveYawSpeed)
+                    .deadband(OperatorConstants.DEADBAND)
+                    .scaleTranslation(Constants.OperatorConstants.swerveSpeed)
+                    .allianceRelativeControl(true);
+            return swerve.driveFieldOriented(driveYaw);
         }
+        return run(()->{});
     }
 
-    public boolean IsAtDesiredYaw(double desired,double actual){
+    public boolean IsAtDesiredYaw(double desired, double actual) {
         return MathUtil.isNear(desired, actual, 0.1);
     }
 

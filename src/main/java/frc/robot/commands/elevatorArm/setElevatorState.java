@@ -9,7 +9,9 @@ import frc.robot.subsystems.elevator.ElevatorConstants;
 public class setElevatorState extends SequentialCommandGroup{
     public setElevatorState(Elevator elev, AngleSubsystem angle, int state) {
         addCommands(
-            new safeElevator(elev,angle,ElevatorConstants.states[state])
+            angle.setAngleCommand(ArmConstants.safeSetpoint),
+            elev.setgoal(ElevatorConstants.states[state-1]),
+            angle.setAngleCommand(ArmConstants.states[state-1])
         );
     }
 }
