@@ -14,11 +14,13 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.AddressableLEDBufferView;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.LEDPattern.GradientType;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorConstants;
@@ -57,27 +59,18 @@ public class LedSubsystem extends SubsystemBase {
      insideLed_buffer_right = insideLed_buffer.createView(74, 74+48).reversed();
     
      insideLed.start();
+  }
 
+  public void setAllianceColorCommand() {
+    LEDPattern blueTeam = LEDPattern.gradient(GradientType.kContinuous, Color.kBlue,Color.kDodgerBlue);
+    LEDPattern redTeam = LEDPattern.gradient(GradientType.kContinuous, Color.kRed,Color.kOrangeRed);
+    //sinsideLed_buffer_middle.
+    //Commands.either(()->, null, DriverStation.getAlliance() == DriverStation.Alliance.Red()
   }
 
 
   @Override
   public void periodic() {
-    LEDPattern base = LEDPattern.gradient(GradientType.kDiscontinuous, Color.kMagenta,Color.kOrangeRed);
-    LEDPattern pat = LEDPattern.progressMaskLayer(()-> elevSub.getPosition()/ElevatorConstants.maxPosition);
-    LEDPattern display = base.mask(pat);
-
-    display.applyTo(insideLed_buffer_left);
-    display.applyTo(insideLed_buffer_right);
-
     insideLed.setData(insideLed_buffer);
   }
-
-  public Command runPattern(LEDPattern pattern){
-    return run(()->{
-      pattern.applyTo(insideLed_buffer);
-    });
-  }
-
-
 }
