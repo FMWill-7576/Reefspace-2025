@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
 
+import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
@@ -23,6 +24,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
@@ -48,15 +50,20 @@ public class VisionSubsystem extends SubsystemBase {
     double final_kI = VisionConstants.kI;
     double final_kD = VisionConstants.kD;
 
-    PIDController turnPID = new PIDController(1, 0, 0);
+    double aprilyaw = 0;
+    boolean isApril = false;
+
+    PIDController turnPID = new PIDController(0.1, 0, 0.02);
     PIDController forwardPID = new PIDController(1, 0, 0);
 
     public VisionSubsystem() {
-        camera = new PhotonCamera("cam7576");
+        camera = new PhotonCamera("Limelight");
         AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
-        robotToCam = new Transform3d(new Translation3d(0.5, 0.0, 0.5), new Rotation3d(0, 0, 0)); // facing forward,
-                                                                                                 // 0.5meter forward of
-                                                                                                 // center, 0.5 meter up
+        robotToCam = new Transform3d(
+                new Translation3d(0, eUtil.centimeterToMeter((195 / 10) + 44 / 10), eUtil.centimeterToMeter(290 / 10)),
+                new Rotation3d(0, Math.toRadians(2), Math.toRadians(18))); // facing forward,
+                                                                           // 0.5meter forward of
+                                                                           // center, 0.5 meter up
         photonPoseEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
                 robotToCam);
     }
@@ -107,7 +114,7 @@ public class VisionSubsystem extends SubsystemBase {
         }
         if (targetVisible == true) {
             double forward = forwardPID.calculate(targetRange, 0) * -1 * 0.2;
-            double turn = turnPID.calculate(targetYaw, 0) * -1 * 0.2;
+            double turn = turnPID.calculate(targetYaw-VisionConstants.yaw, 0) * -1 * 0.2;
             swerve.driveCommand(
                     () -> forward,
                     () -> controller.getLeftX(),
@@ -115,10 +122,33 @@ public class VisionSubsystem extends SubsystemBase {
         }
     }
 
+    public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d prevEstimatedRobotPose) {
+        photonPoseEstimator.setReferencePose(prevEstimatedRobotPose);
+        var results = camera.getAllUnreadResults();
+        return photonPoseEstimator.update(results.get(results.size() - 1));
+    }
+
     public Command yawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
-        // Read in relevant data from the Camera
-        boolean targetVisible = false;
-        double targetYaw = 0.0;
+        return swerve.driveFieldOriented(
+                SwerveInputStream.of(swerve.getSwerveDrive(),
+                        () -> controller.getLeftY(),
+                        () -> controller.getLeftX())
+                        .withControllerRotationAxis(() -> MathUtil.clamp(turnPID.calculate(aprilyaw, 0), -1, 1)
+                                * 0.25 * -1)
+                        .deadband(OperatorConstants.DEADBAND)
+                        .scaleTranslation(Constants.OperatorConstants.swerveSpeed));
+    }
+
+    public boolean IsAtDesiredYaw(double desired, double actual) {
+        return MathUtil.isNear(desired, actual, 0.1);
+    }
+
+    public boolean isAprilOnResult() {
+        return isApril;
+    }
+
+    @Override
+    public void periodic() {
         var results = camera.getAllUnreadResults();
         if (!results.isEmpty()) {
             // Camera processed a new frame since last
@@ -127,41 +157,16 @@ public class VisionSubsystem extends SubsystemBase {
             if (result.hasTargets()) {
                 // At least one AprilTag was seen by the camera
                 for (var target : result.getTargets()) {
-                    if (eUtil.isIntExistsInArray(target.getFiducialId(), VisionConstants.reefIDs)) {
-                        targetYaw = target.getYaw();
-                        targetVisible = true;
+                    if (target.getFiducialId() == 12) {
+                        aprilyaw = target.getYaw();
+                        isApril = true;
                         break;
                     }
                 }
+            } else {
+                isApril = false;
+                aprilyaw = 0;
             }
         }
-        if (targetVisible) {
-            double turn = MathUtil.clamp(turnPID.calculate(targetYaw, swerve.getPose().getRotation().getRadians()), -1, 1);
-            //maybeee
-            /*
-            swerve.driveCommand(
-                    () -> controller.getLeftY() * 0.25,
-                    () -> controller.getLeftX() * -1,
-                    () -> MathUtil.clamp(turn, -1, 1) * 0.2);
-            */
-            SwerveInputStream driveYaw = SwerveInputStream.of(swerve.getSwerveDrive(),
-                    () -> controller.getLeftY() * -1,
-                    () -> controller.getLeftX() * -1)
-                    .withControllerRotationAxis(()->turn * Constants.OperatorConstants.swerveYawSpeed)
-                    .deadband(OperatorConstants.DEADBAND)
-                    .scaleTranslation(Constants.OperatorConstants.swerveSpeed)
-                    .allianceRelativeControl(true);
-            return swerve.driveFieldOriented(driveYaw);
-        }
-        return run(()->{});
-    }
-
-    public boolean IsAtDesiredYaw(double desired, double actual) {
-        return MathUtil.isNear(desired, actual, 0.1);
-    }
-
-    @Override
-    public void periodic() {
-
     }
 }
