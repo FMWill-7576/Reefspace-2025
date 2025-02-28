@@ -150,7 +150,7 @@ public class RobotContainer {
 
     // Autonomous Chooser (Searchs auto folder)
 
-    autoChooser.setDefaultOption("do nothing", drivebase.getAutonomousCommand("do nothing"));
+    autoChooser.setDefaultOption("hello", drivebase.getAutonomousCommand("hello"));
     SmartDashboard.putData(autoChooser);
     if (listOfAutos != null) {
       for (int i = 0; i < listOfAutos.length; i++) {
@@ -263,9 +263,10 @@ public class RobotContainer {
 
 
       driver1.cross()
-        .whileTrue(vision.yawDrive(drivebase,driver1));
+        .whileTrue(vision.yawDrive(drivebase, driver1).onlyIf(()->vision.isAprilOnResult()));
 
-      driver1.circle().onTrue(drivebase.setHeadingCorrectionTrue()).onFalse(drivebase.setHeadingCorrectionFalse());
+      driver1.circle().onTrue(Commands.runOnce(()->drivebase.zeroGyro()));
+
 
       /*
       driver1.triangle()
