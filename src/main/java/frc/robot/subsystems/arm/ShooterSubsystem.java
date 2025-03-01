@@ -8,16 +8,19 @@ import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.wpilibj.AnalogEncoder;
+import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 
-public class OtReisSubsystem extends SubsystemBase{
+public class ShooterSubsystem extends SubsystemBase{
 
     private SparkMax shooterMotor = new SparkMax(12, MotorType.kBrushless);
     private SparkMaxConfig config = new SparkMaxConfig();
-    public OtReisSubsystem(){
+    private AnalogInput laser = new AnalogInput(0);
+    public ShooterSubsystem(){
         config
             .inverted(false)
             .idleMode(IdleMode.kCoast);
@@ -47,6 +50,10 @@ public class OtReisSubsystem extends SubsystemBase{
 
     public Command OtReisSetCommand(double goal){
         return run(()->shooterMotor.set(goal));
+    }
+
+    public boolean IsCoral() {
+        return laser.getVoltage()>4.0;
     }
 }
 

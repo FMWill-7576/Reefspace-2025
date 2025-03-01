@@ -28,11 +28,12 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.Preferences;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.elevatorArm.runIntakeUntilCoral;
 import frc.robot.commands.elevatorArm.safeElevator;
 import frc.robot.commands.elevatorArm.setElevatorState;
 import frc.robot.subsystems.arm.AngleSubsystem;
 import frc.robot.subsystems.arm.ArmConstants;
-import frc.robot.subsystems.arm.OtReisSubsystem;
+import frc.robot.subsystems.arm.ShooterSubsystem;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.led.LedSubsystem;
@@ -75,7 +76,7 @@ public class RobotContainer {
   private final Elevator elevator = new Elevator();
   private final AngleSubsystem angleSubsystem = new AngleSubsystem();
   private final LedSubsystem s_led = new LedSubsystem(elevator);
-  private final OtReisSubsystem otReis = new OtReisSubsystem();
+  private final ShooterSubsystem shooter = new ShooterSubsystem();
   private final VisionSubsystem vision = new VisionSubsystem();
 
   // Importing Auto's
@@ -145,13 +146,17 @@ public class RobotContainer {
 
     // Configure the trigger bindings
     configureBindings();
+
     DriverStation.silenceJoystickConnectionWarning(true);
-    NamedCommands.registerCommand("test", Commands.print("I EXIST"));
+
+    NamedCommands.registerCommand("intakeTillCoral",new runIntakeUntilCoral(shooter));
+    NamedCommands.registerCommand("coral1",new setElevatorState(elevator,angleSubsystem,1));
+    NamedCommands.registerCommand("coral2",new setElevatorState(elevator,angleSubsystem,2));
+    NamedCommands.registerCommand("coral3",new setElevatorState(elevator,angleSubsystem,3));
+    NamedCommands.registerCommand("coral4",new setElevatorState(elevator,angleSubsystem,4));
 
     // Autonomous Chooser (Searchs auto folder)
-
     autoChooser.setDefaultOption("hello", drivebase.getAutonomousCommand("hello"));
-    SmartDashboard.putData(autoChooser);
     if (listOfAutos != null) {
       for (int i = 0; i < listOfAutos.length; i++) {
         if (listOfAutos[i].isFile()) {
@@ -160,6 +165,8 @@ public class RobotContainer {
         }
       }
     }
+
+    SmartDashboard.putData(autoChooser);
   }
 
   /**
@@ -197,7 +204,7 @@ public class RobotContainer {
 
     //elevator.setDefaultCommand(elevator.elevHoldCommand());
     //angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
-    otReis.setDefaultCommand(otReis.OtReisStop());
+    shooter.setDefaultCommand(shooter.OtReisStop());
 
     angleSubsystem.SetAngle(ArmConstants.homeSetpoint);
 
@@ -238,8 +245,8 @@ public class RobotContainer {
       driver2.povLeft().onTrue(angleSubsystem.setAngleCommand(ArmConstants.homeSetpoint));
       driver2.povRight().onTrue(angleSubsystem.setAngleCommand(0.61));
 
-      driver2.leftTrigger().whileTrue(otReis.OtReisIntake());
-      driver2.rightTrigger().whileTrue(otReis.OtReisShooter());
+      driver2.leftTrigger().whileTrue(shooter.OtReisShooter().onlyWhile(()->!shooter.IsCoral()));
+      driver2.rightTrigger().whileTrue(shooter.OtReisShooter());
 
       driver2.a().onTrue(new setElevatorState(elevator,angleSubsystem,1));
       driver2.b().onTrue(new setElevatorState(elevator,angleSubsystem,2));
