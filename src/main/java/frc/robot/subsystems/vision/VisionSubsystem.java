@@ -26,12 +26,14 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants;
 import frc.robot.eUtil;
 import frc.robot.subsystems.elevator.ElevatorConstants;
+import frc.robot.subsystems.led.LedSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import swervelib.SwerveInputStream;
 
@@ -46,6 +48,7 @@ public class VisionSubsystem extends SubsystemBase {
     Transform3d robotToCam = new Transform3d(new Translation3d(0.5, 0.0, 0.5), new Rotation3d(0, 0, 0));
     AprilTagFieldLayout aprilTagFieldLayout;
     PhotonPoseEstimator photonPoseEstimator;
+    PhotonTrackedTarget currentTarget;
     double final_kP = VisionConstants.kP;
     double final_kI = VisionConstants.kI;
     double final_kD = VisionConstants.kD;
@@ -57,6 +60,7 @@ public class VisionSubsystem extends SubsystemBase {
     PIDController forwardPID = new PIDController(1, 0, 0);
 
     public VisionSubsystem() {
+
         camera = new PhotonCamera("Limelight");
         AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
         robotToCam = new Transform3d(
@@ -80,48 +84,6 @@ public class VisionSubsystem extends SubsystemBase {
         return pose.getRotation().getAngle();
     }
 
-    public PhotonTrackedTarget bestTarget() {
-        List<PhotonPipelineResult> result = camera.getAllUnreadResults();
-        return result.get(0).getBestTarget();
-    }
-
-    public void forwardYawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
-        boolean targetVisible = false;
-        double targetYaw = 0.0;
-        double targetRange = 0.0;
-        var results = camera.getAllUnreadResults();
-        if (!results.isEmpty()) {
-            // Camera processed a new frame since last
-            // Get the last one in the list.
-            var result = results.get(results.size() - 1);
-            if (result.hasTargets()) {
-                // At least one AprilTag was seen by the camera
-                for (var target : result.getTargets()) {
-                    if (eUtil.isIntExistsInArray(target.getFiducialId(), VisionConstants.reefIDs)) {
-                        // Found Tag 7, record its information
-                        targetYaw = target.getYaw();
-                        targetRange = PhotonUtils.calculateDistanceToTargetMeters(
-                                0.5, // Measured with a tape measure, or in CAD.
-                                VisionConstants.aprilHeightInfo(target.getFiducialId()), // From 2024 game manual for ID
-                                                                                         // 7
-                                Units.degreesToRadians(-30.0), // Measured with a protractor, or in CAD.
-                                Units.degreesToRadians(target.getPitch()));
-
-                        targetVisible = true;
-                    }
-                }
-            }
-        }
-        if (targetVisible == true) {
-            double forward = forwardPID.calculate(targetRange, 0) * -1 * 0.2;
-            double turn = turnPID.calculate(targetYaw-VisionConstants.yaw, 0) * -1 * 0.2;
-            swerve.driveCommand(
-                    () -> forward,
-                    () -> controller.getLeftX(),
-                    () -> turn);
-        }
-    }
-
     public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d prevEstimatedRobotPose) {
         photonPoseEstimator.setReferencePose(prevEstimatedRobotPose);
         var results = camera.getAllUnreadResults();
@@ -129,14 +91,39 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     public Command yawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
-        return swerve.driveFieldOriented(
-                SwerveInputStream.of(swerve.getSwerveDrive(),
-                        () -> controller.getLeftY(),
-                        () -> controller.getLeftX())
-                        .withControllerRotationAxis(() -> MathUtil.clamp(turnPID.calculate(aprilyaw, 0), -1, 1)
-                                * 0.25 * -1)
-                        .deadband(OperatorConstants.DEADBAND)
-                        .scaleTranslation(Constants.OperatorConstants.swerveSpeed));
+        double desiredYaw = aprilyaw + VisionConstants.yaw;
+        if (isApril) {
+            return swerve.driveFieldOriented(
+                    SwerveInputStream.of(swerve.getSwerveDrive(),
+                            () -> controller.getLeftY(),
+                            () -> controller.getLeftX())
+                            .withControllerRotationAxis(() -> MathUtil.clamp(turnPID.calculate(desiredYaw, 0), -1, 1)
+                                    * 0.25 * -1)
+                            .deadband(OperatorConstants.DEADBAND)
+                            .scaleTranslation(Constants.OperatorConstants.swerveSpeed));
+        }
+        return Commands.run(() -> {
+        });
+    }
+
+    public Command forwardYawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
+        double desiredYaw = aprilyaw + VisionConstants.yaw;
+        double distance = PhotonUtils.calculateDistanceToTargetMeters(
+                                        VisionConstants.cameraHeigthtMeters, // Measured with a tape measure, or in CAD.
+                                        VisionConstants.aprilHeightInfo(currentTarget.getFiducialId()), // From 2024 game manual for ID 7
+                                        VisionConstants.cameraPitchInRadians, // Measured with a protractor, or in CAD.
+                                        Units.degreesToRadians(currentTarget.getPitch()));
+        if (isApril) {
+            return swerve.driveFieldOriented(
+                    SwerveInputStream.of(swerve.getSwerveDrive(),
+                            () -> MathUtil.clamp(forwardPID.calculate(distance, 0.1), -1, 1) *.25,
+                            () -> controller.getLeftX())
+                            .withControllerRotationAxis(() -> MathUtil.clamp(turnPID.calculate(desiredYaw, 0), -1, 1)
+                                    * 0.25 * -1)
+                            .deadband(OperatorConstants.DEADBAND)
+                            .scaleTranslation(Constants.OperatorConstants.swerveSpeed));
+        }
+        return Commands.run(()->{});
     }
 
     public boolean IsAtDesiredYaw(double desired, double actual) {
@@ -160,6 +147,7 @@ public class VisionSubsystem extends SubsystemBase {
                     if (target.getFiducialId() == 12) {
                         aprilyaw = target.getYaw();
                         isApril = true;
+                        currentTarget = target;
                         break;
                     }
                 }

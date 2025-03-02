@@ -17,12 +17,12 @@ public class ElevatorConstants {
     public static String kV_key = "Elevator_kV";
     public static String kA_key = "Elevator_kA";
 
-    public static double kP = 0.9;
+    public static double kP = 0.8;
     public static double kI = 0;
-    public static double kD = 1;
+    public static double kD = 4;
 
-    public static double minOutput = -0.6;
-    public static double maxOutput = 0.95;
+    public static double minOutput = -0.4;
+    public static double maxOutput = 1;
 
     //Robot Information
 

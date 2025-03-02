@@ -43,7 +43,7 @@ public class Elevator extends SubsystemBase {
     mainConfig
         .inverted(true)
         .smartCurrentLimit(ElevatorConstants.smartCurrent)
-        .idleMode(IdleMode.kBrake)
+        .idleMode(IdleMode.kCoast)
         .openLoopRampRate(0.25)
         .closedLoopRampRate(0.15)
         .softLimit
@@ -90,7 +90,7 @@ public class Elevator extends SubsystemBase {
   }
 
   public boolean IsAtDesiredHeight(double height){
-    return MathUtil.isNear(height, boreEncoder.getPosition(), 0.1);
+    return MathUtil.isNear(height, boreEncoder.getPosition(), 0.3);
   }
 
   public double getCurrentSetpoint() {
@@ -110,6 +110,21 @@ public class Elevator extends SubsystemBase {
       currentIndex = currentIndex - 1;
     }
     return this.run(()->setPosition(ElevatorConstants.states[currentIndex])).until(()->IsAtDesiredHeight(ElevatorConstants.states[currentIndex]));
+  }
+
+
+  public int getCurrentState() {
+    double pos = boreEncoder.getPosition();
+    if(MathUtil.isNear(ElevatorConstants.states[0], pos, 0.5)){
+      return 1;
+    }else if(MathUtil.isNear(ElevatorConstants.states[1], pos, 0.5)){
+      return 2;
+    }else if(MathUtil.isNear(ElevatorConstants.states[2], pos, 0.5)){
+      return 3;
+    }else if(MathUtil.isNear(ElevatorConstants.states[3], pos, 0.5)){
+      return 4;
+    }
+    return 100;
   }
 
 
@@ -177,5 +192,6 @@ public class Elevator extends SubsystemBase {
     SmartDashboard.putNumber("Elev output amps", mainMotor.getOutputCurrent());
     SmartDashboard.putNumber("Elev temp", mainMotor.getMotorTemperature());
     SmartDashboard.putNumber("current index", currentIndex);
+    SmartDashboard.putNumber("Current state", getCurrentState());
   }
 }

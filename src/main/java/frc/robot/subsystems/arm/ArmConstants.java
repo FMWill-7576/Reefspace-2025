@@ -17,8 +17,9 @@ public class ArmConstants {
 
     public static double homeForwardLimit = 0.8;
 
-    public static double homeSetpoint = 0.0837;
+    public static double homeSetpoint = 0;
     public static double safeSetpoint = 0.61;
+    public static double homeToSecondState = 0.2109375;
 
     //Tuning
     public static double kG = 0.2;
