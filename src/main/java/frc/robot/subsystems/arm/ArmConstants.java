@@ -17,8 +17,9 @@ public class ArmConstants {
 
     public static double homeForwardLimit = 0.8;
 
-    public static double homeSetpoint = 0.0837;
-    public static double safeSetpoint = 0.61;
+    public static double homeSetpoint = 0;
+    public static double safeSetpoint = 0.513;
+    public static double homeToSecondState = 0.2109375;
 
     //Tuning
     public static double kG = 0.2;
@@ -32,9 +33,17 @@ public class ArmConstants {
     //Presets
     public static double[] states = {
         homeSetpoint,
-        0.2204,
-        0.242,
-        0.2781,
+        0.2,
+        0.178701,
+        0.2,
+    };
+    
+
+    public static double[] algeaStates = {
+        0.61767, //home
+        1.15087, //shooter
+        1.01708, //second state
+        0.909, //max
     };
     
 }

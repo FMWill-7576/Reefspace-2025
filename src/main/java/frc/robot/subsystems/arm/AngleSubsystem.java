@@ -66,9 +66,9 @@ public class AngleSubsystem  extends SubsystemBase{
         angleMotorConfig.closedLoop 
             .feedbackSensor(FeedbackSensor.kAlternateOrExternalEncoder)
             //PID section
-            .pid(1,0,0.5,ClosedLoopSlot.kSlot0)
+            .pid(1,0,1.2,ClosedLoopSlot.kSlot0)
             //from the example, idk what does it do
-            .outputRange(-0.3, 0.3);
+            .outputRange(-0.4, 0.4);
 
         
         angleMotorConfig.softLimit
@@ -78,7 +78,7 @@ public class AngleSubsystem  extends SubsystemBase{
             .forwardSoftLimit(2);
         
         
-        angleMotor.configure(angleMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters); 
+        angleMotor.configure(angleMotorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters); 
         setupPreferences();
         encoder.setPosition(0);
     }
@@ -90,7 +90,7 @@ public class AngleSubsystem  extends SubsystemBase{
             angle, 
             ControlType.kPosition,
             ClosedLoopSlot.kSlot0,
-            getArmFeedforward().calculate(encoder.getPosition(),0.5),
+            getArmFeedforward().calculate(encoder.getPosition(),0.2),
             ArbFFUnits.kVoltage
         ); 
     }
@@ -135,7 +135,7 @@ public class AngleSubsystem  extends SubsystemBase{
     }
 
     public Command armHoldAsAngle(){
-        return run(()->SetAngleRotation(Rotation2d.fromDegrees(encoder.getPosition())));
+        return run(()->SetAngle(encoder.getPosition()));
     }
 
     public Command armUp(){

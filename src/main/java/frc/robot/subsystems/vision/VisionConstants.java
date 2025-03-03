@@ -44,6 +44,9 @@ public class VisionConstants {
         h.put(10, eUtil.centimeterToMeter(17));
         h.put(11, eUtil.centimeterToMeter(17));
 
+        //delete later
+        h.put(12, eUtil.centimeterToMeter(17));
+
         h.put(17, eUtil.centimeterToMeter(17));
         h.put(18, eUtil.centimeterToMeter(17));
         h.put(19, eUtil.centimeterToMeter(17));

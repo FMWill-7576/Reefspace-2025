@@ -6,6 +6,8 @@ package frc.robot;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -28,11 +30,15 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.Preferences;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.elevatorArm.algeaState;
+import frc.robot.commands.elevatorArm.runIntakeUntilCoral;
 import frc.robot.commands.elevatorArm.safeElevator;
 import frc.robot.commands.elevatorArm.setElevatorState;
+import frc.robot.commands.elevatorArm.shootTillNoCoral;
 import frc.robot.subsystems.arm.AngleSubsystem;
 import frc.robot.subsystems.arm.ArmConstants;
-import frc.robot.subsystems.arm.OtReisSubsystem;
+import frc.robot.subsystems.arm.ShooterSubsystem;
+import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.led.LedSubsystem;
@@ -67,16 +73,19 @@ public class RobotContainer {
   final CommandPS5Controller driver1 = new CommandPS5Controller(0);
   final CommandXboxController driver2 = new CommandXboxController(1);
 
-  public int elevState = 0;
 
   private final SwerveSubsystem drivebase = new SwerveSubsystem(
       new File(Filesystem.getDeployDirectory(), "swerve"));
 
   private final Elevator elevator = new Elevator();
   private final AngleSubsystem angleSubsystem = new AngleSubsystem();
-  private final LedSubsystem s_led = new LedSubsystem(elevator);
-  private final OtReisSubsystem otReis = new OtReisSubsystem();
+  private final ShooterSubsystem shooter = new ShooterSubsystem();
   private final VisionSubsystem vision = new VisionSubsystem();
+  //private final ClimbSubsystem climb = new ClimbSubsystem();
+  private final LedSubsystem s_led = new LedSubsystem(elevator,vision,shooter);
+
+  double swerveSpeed = 1.0;
+  double swerveYawSpeed = 1.0;
 
   // Importing Auto's
   Path targetDir = Paths.get("").toAbsolutePath();;
@@ -88,15 +97,26 @@ public class RobotContainer {
 
   // SWERVELER
 
+ 
+
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
+      () -> driver1.getLeftY() * -1,
+      () -> driver1.getLeftX() * -1)
+      .withControllerRotationAxis(()->driver1.getRightX()*-1)
+      .deadband(OperatorConstants.DEADBAND)
+      .scaleTranslation(swerveSpeed)
+      .scaleRotation(swerveYawSpeed)
+      .allianceRelativeControl(true);
+
+      SwerveInputStream angularSlow = SwerveInputStream.of(drivebase.getSwerveDrive(),
       () -> driver1.getLeftY() * -1,
       () -> driver1.getLeftX() * -1)
       .withControllerRotationAxis(driver1::getRightX)
       .deadband(OperatorConstants.DEADBAND)
-      .scaleTranslation(Constants.OperatorConstants.swerveSpeed)
-      .scaleRotation(Constants.OperatorConstants.swerveYawSpeed)
+      .scaleTranslation(swerveSpeed/2)
+      .scaleRotation(swerveYawSpeed/2)
       .allianceRelativeControl(true);
-      
+
 
     
 
@@ -104,6 +124,7 @@ public class RobotContainer {
    * Clone's the angular velocity input stream and converts it to a fieldRelative
    * input stream.
    */
+ 
   SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(driver1::getRightX,
       driver1::getRightY)
       .headingWhile(true);
@@ -112,6 +133,7 @@ public class RobotContainer {
    * Clone's the angular velocity input stream and converts it to a robotRelative
    * input stream.
    */
+
   SwerveInputStream driveRobotOriented = driveAngularVelocity.copy().robotRelative(true)
       .allianceRelativeControl(false);
 
@@ -140,18 +162,27 @@ public class RobotContainer {
               (Math.PI *
                   2))
       .headingWhile(true);
+    
 
   public RobotContainer() {
 
     // Configure the trigger bindings
     configureBindings();
+
     DriverStation.silenceJoystickConnectionWarning(true);
-    NamedCommands.registerCommand("test", Commands.print("I EXIST"));
+
+    NamedCommands.registerCommand("go_L4", new setElevatorState(elevator, angleSubsystem, vision, 4));
+    NamedCommands.registerCommand("go_L3", new setElevatorState(elevator, angleSubsystem, vision, 3));
+    NamedCommands.registerCommand("go_L2", new setElevatorState(elevator, angleSubsystem, vision, 2));
+    NamedCommands.registerCommand("go_L1", new setElevatorState(elevator, angleSubsystem, vision, 1));
+    NamedCommands.registerCommand("shootTillNoCoral",shooter.ShooterShootSpecific(0.75).until(()->!shooter.IsCoral()));
+
 
     // Autonomous Chooser (Searchs auto folder)
-
     autoChooser.setDefaultOption("hello", drivebase.getAutonomousCommand("hello"));
-    SmartDashboard.putData(autoChooser);
+    autoChooser.setDefaultOption("firstl4", drivebase.getAutonomousCommand("firstl4"));
+    autoChooser.setDefaultOption("taxi", drivebase.getAutonomousCommand("taxi"));
+    
     if (listOfAutos != null) {
       for (int i = 0; i < listOfAutos.length; i++) {
         if (listOfAutos[i].isFile()) {
@@ -160,6 +191,9 @@ public class RobotContainer {
         }
       }
     }
+
+    SmartDashboard.putData(autoChooser);
+  
   }
 
   /**
@@ -177,6 +211,8 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
+     
+
     Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
     Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
     Command driveRobotOrientedAngularVelocity  = drivebase.driveFieldOriented(driveRobotOriented);
@@ -188,18 +224,24 @@ public class RobotContainer {
         driveDirectAngleKeyboard);
 
 
+
     Command driveManipulated = drivebase.driveCommand(
       ()->Preferences.getDouble("s_transX", 0),
       ()->Preferences.getDouble("s_transY", 0),
       ()->Preferences.getDouble("s_angular", 0)
       );
 
+    
 
-    //elevator.setDefaultCommand(elevator.elevHoldCommand());
+
+    elevator.setDefaultCommand(elevator.holdAtSetpoint());
     //angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
-    otReis.setDefaultCommand(otReis.OtReisStop());
+    shooter.setDefaultCommand(shooter.OtReisStop());
+    s_led.setDefaultCommand(s_led.LedCommand());
 
     angleSubsystem.SetAngle(ArmConstants.homeSetpoint);
+
+    //climb.setDefaultCommand(climb.ClimbIdle());
 
     if (Robot.isSimulation()) {
       drivebase.setDefaultCommand(driveFieldOrientedDirectAngleKeyboard);
@@ -212,8 +254,8 @@ public class RobotContainer {
 
       drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
 
-      driver2.povDown().whileTrue(elevator.manualDownCommand()).onFalse(elevator.manualStopCommand());
-      driver2.povUp().whileTrue(elevator.manualUpCommand()).onFalse(elevator.manualStopCommand());
+      driver2.povDown().whileTrue(elevator.manualDownCommand());
+      driver2.povUp().whileTrue(elevator.manualUpCommand());
       //Set elevator as setpoints
     
 
@@ -238,41 +280,48 @@ public class RobotContainer {
       driver2.povLeft().onTrue(angleSubsystem.setAngleCommand(ArmConstants.homeSetpoint));
       driver2.povRight().onTrue(angleSubsystem.setAngleCommand(0.61));
 
-      driver2.leftTrigger().whileTrue(otReis.OtReisIntake());
-      driver2.rightTrigger().whileTrue(otReis.OtReisShooter());
+      driver2.leftTrigger().whileTrue(new runIntakeUntilCoral(shooter));
+      driver2.rightTrigger().whileTrue(shooter.ShooterShootSpecific(0.75));
 
-      driver2.a().onTrue(new setElevatorState(elevator,angleSubsystem,1));
-      driver2.b().onTrue(new setElevatorState(elevator,angleSubsystem,2));
-      driver2.y().onTrue(new setElevatorState(elevator,angleSubsystem,3));
-      driver2.x().onTrue(new setElevatorState(elevator,angleSubsystem,4));
+      driver2.a().onTrue(new setElevatorState(elevator,angleSubsystem,vision,1).onlyIf(()->vision.getAprilDistance()>0.87));
+      driver2.b().onTrue(new setElevatorState(elevator,angleSubsystem,vision,2).onlyIf(()->vision.getAprilDistance()>0.87));
+      driver2.y().onTrue(new setElevatorState(elevator,angleSubsystem,vision,3).onlyIf(()->vision.getAprilDistance()>0.87));
+      driver2.x().onTrue(new setElevatorState(elevator,angleSubsystem,vision,4).onlyIf(()->vision.getAprilDistance()>0.95));
 
-      driver2.leftBumper().whileTrue(angleSubsystem.armDown()).whileFalse(angleSubsystem.armStop());
-      driver2.rightBumper().whileTrue(angleSubsystem.armUp()).whileFalse(angleSubsystem.armStop());
+      driver2.leftBumper().onTrue(new algeaState(elevator, angleSubsystem, 4));//algea max
+      driver2.rightBumper().onTrue(new algeaState(elevator, angleSubsystem, 3));//algea min
+      driver2.povLeft().onTrue(new algeaState(elevator, angleSubsystem, 2));//shoot
+      driver2.povRight().onTrue(new algeaState(elevator, angleSubsystem, 1));//home
 
 
       //Driver 1 (Controller, swerve)p
-
-      //Yaw will follow the closest
-      /*
-      driver1.cross()
-        .whileTrue(Commands.run(()->aimAtBestTargetPID()))
-        .whileFalse(Commands.run(()->drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity)));
-
-      driver1.circle().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      */
-
 
       driver1.cross()
         .whileTrue(vision.yawDrive(drivebase, driver1).onlyIf(()->vision.isAprilOnResult()));
 
       driver1.circle().onTrue(Commands.runOnce(()->drivebase.zeroGyro()));
 
+      driver1.povRight().whileTrue(shooter.ShooterShootSpecific(0.1));
+      driver1.povLeft().whileTrue(shooter.ShooterShootSpecific(-0.1));
 
-      /*
-      driver1.triangle()
-        .whileTrue(new InstantCommand(()->this.aimAtBestTargetPID()))
-        .onFalse(new InstantCommand(()->drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity)));
-      */
+      driver1.triangle().whileTrue(shooter.ShooterShootSpecific(-0.5));
+
+      driver1.R2().whileTrue(shooter.ShooterShootSpecific(0.75));
+      driver1.L2().whileTrue(new runIntakeUntilCoral(shooter));
+
+      driver1.R1()
+      .onTrue(Commands.runOnce(()->drivebase.setDefaultCommand(drivebase.driveFieldOriented(angularSlow))))
+        .onFalse(Commands.runOnce(()->drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity)));
+
+
+
+      
+      Trigger driverStationDisabled = new Trigger(DriverStation::isDisabled);
+      driverStationDisabled.onTrue(elevator.setSetpoint(0));
+  
+
+      //driver1.povLeft().whileTrue(climb.ClimbUp());
+      //driver1.povRight().whileTrue(climb.ClimbDown());
 
       // driver2.b().onTrue(angleSubsystem.resetEncoder());
 
@@ -300,38 +349,6 @@ public class RobotContainer {
   public void setMotorBrake(boolean brake)
   {
     drivebase.setMotorBrake(brake);
-  }
-  public void aimAtBestTargetTest(){
-    PhotonTrackedTarget id = vision.bestTarget();
-    Translation2d translation = new Translation2d(id.getBestCameraToTarget().getMeasureX(),id.getBestCameraToTarget().getMeasureY());
-    Rotation2d rotation = new Rotation2d(id.getYaw());
-    Pose2d aimPose = new Pose2d(translation,rotation);
-    Command driveAimCommand = drivebase.driveToPose(aimPose);
-
-    drivebase.setDefaultCommand(driveAimCommand);
-  }
-
-  public void aimAtBestTargetPID() {
-    PhotonTrackedTarget id = vision.bestTarget();
-
-    double getGoal = MathUtil.clamp(vision.getLastestPID().calculate(drivebase.getPose().getRotation().getRadians(), Math.toRadians(id.getYaw())), -1, 1);
-
-    SwerveInputStream driveVelocityAim = SwerveInputStream.of(drivebase.getSwerveDrive(),
-      () -> driver1.getLeftY() * -1,
-      () -> driver1.getLeftX() * -1)
-      .withControllerRotationAxis(()->getGoal)
-      .deadband(OperatorConstants.DEADBAND)
-      .allianceRelativeControl(true);
-
-    
-
-    Command driveAimCommand = drivebase.driveFieldOriented(driveVelocityAim);
-    drivebase.setDefaultCommand(driveAimCommand);
-  }
-
-  public void aimAtCurrentTagWithFieldYaw(){
-    PhotonTrackedTarget id = vision.bestTarget();
-    double radianYaw = vision.getAprilTagYawAsRadian(id.getFiducialId());
   }
 
 }
