@@ -1,5 +1,6 @@
 package frc.robot.subsystems.vision;
 
+import java.lang.annotation.Target;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
@@ -111,6 +113,22 @@ public class VisionSubsystem extends SubsystemBase {
              return 99.0;
          }
     }
+
+    public double getAprilX() {
+        if(isApril && isValidApril) {
+            return currentTarget.getBestCameraToTarget().getX();
+         }else {
+             return 99.0;
+         }
+    }
+
+    public double getAprilZ() {
+        if(isApril && isValidApril) {
+            return currentTarget.getBestCameraToTarget().getRotation().getAngle();
+         }else {
+             return 99.0;
+         }
+    }
     
 
     public Command yawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
@@ -127,6 +145,19 @@ public class VisionSubsystem extends SubsystemBase {
         }
         return Commands.run(() -> {
         });
+    }
+
+    public Command allignDrive(SwerveSubsystem swerve, CommandPS5Controller controller){
+        double goal = 163;
+        double desired = goal;
+            return run(()->
+            swerve.drive(
+                swerve.getTargetSpeeds(
+                    controller.getLeftX()*-1*0.5, 
+                    controller.getLeftY()*0.5, 
+                    Rotation2d.fromDegrees(goal)
+                )));
+    
     }
 
     public Command forwardYawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
@@ -176,6 +207,7 @@ public class VisionSubsystem extends SubsystemBase {
                             //SmartDashboard.putNumber("April distance", getAprilDistance());
                             SmartDashboard.putNumber("get current x", target.getBestCameraToTarget().getX());
                             SmartDashboard.putNumber("get cam y", getAprilY());
+                            SmartDashboard.putNumber("get z ", getAprilZ());
                         }else {
                             isValidApril = false;
                         }

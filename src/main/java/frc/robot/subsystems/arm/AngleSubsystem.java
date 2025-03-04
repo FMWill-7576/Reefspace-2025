@@ -105,18 +105,6 @@ public class AngleSubsystem  extends SubsystemBase{
        return a;
     }
 
-    public void SetAngleRotation(Rotation2d angle){
-        //derece, kontrol türü, slot, feedforward!!!! ileride feedforward gerekebilir
-        setpoint = angle.getDegrees();
-        angleClosedLoopController.setReference(
-            angle.getDegrees(), 
-            ControlType.kPosition,
-            ClosedLoopSlot.kSlot0,
-            getArmFeedforward().calculate(angle.getRadians(),0),
-            ArbFFUnits.kVoltage
-        ); 
-    }
-
     public double getEncoder() {
         return encoder.getPosition();
     }
@@ -125,8 +113,8 @@ public class AngleSubsystem  extends SubsystemBase{
         return run(()-> SetAngle(goal)).until(()->IsAtDesiredPosition(goal));
     }
 
-    public Command setAngleAsRotationCommand(Rotation2d goal) {
-        return run(()-> SetAngleRotation(goal));
+    public Command HoldArmAtSetpoint() {
+        return run(()->SetAngle(setpoint));
     }
 
 
@@ -164,6 +152,17 @@ public class AngleSubsystem  extends SubsystemBase{
 
     public Command setArmSafe(){
         return run(()->SetAngle(2)).until(()->IsAtDesiredPosition(2));
+    }
+
+    public Command armSetpointUp() {
+        return run(()->setpoint-=0.05);
+    }
+    public Command armSetpointDown() {
+        return run(()->setpoint+=0.05);
+    }
+
+    public Command setArmSetpoint(double goal) {
+        return runOnce(()->setpoint=0);
     }
 
     public void setupPreferences() {

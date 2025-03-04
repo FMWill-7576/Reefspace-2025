@@ -29,7 +29,7 @@ public class VisionConstants {
 
     //delete 12 afterward!
     public static int[] reefIDs = {
-        6,7,8,9,10,11,12,
+        6,7,8,9,10,11,
 
         17,18,19,20,21,22
     };

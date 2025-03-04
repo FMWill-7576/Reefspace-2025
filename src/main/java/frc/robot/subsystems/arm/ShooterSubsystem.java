@@ -24,7 +24,7 @@ public class ShooterSubsystem extends SubsystemBase{
     public ShooterSubsystem(){
         config
             .inverted(false)
-            .idleMode(IdleMode.kCoast);
+            .idleMode(IdleMode.kBrake);
 
         shooterMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }

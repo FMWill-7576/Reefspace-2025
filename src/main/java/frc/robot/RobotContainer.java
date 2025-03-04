@@ -77,15 +77,15 @@ public class RobotContainer {
   private final SwerveSubsystem drivebase = new SwerveSubsystem(
       new File(Filesystem.getDeployDirectory(), "swerve"));
 
-  private final Elevator elevator = new Elevator();
+  public final Elevator elevator = new Elevator();
   private final AngleSubsystem angleSubsystem = new AngleSubsystem();
   private final ShooterSubsystem shooter = new ShooterSubsystem();
   private final VisionSubsystem vision = new VisionSubsystem();
   //private final ClimbSubsystem climb = new ClimbSubsystem();
   private final LedSubsystem s_led = new LedSubsystem(elevator,vision,shooter);
 
-  double swerveSpeed = 1.0;
-  double swerveYawSpeed = 1.0;
+  double swerveYawSpeed;
+  double swerveSpeed;
 
   // Importing Auto's
   Path targetDir = Paths.get("").toAbsolutePath();;
@@ -100,12 +100,10 @@ public class RobotContainer {
  
 
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-      () -> driver1.getLeftY() * -1,
-      () -> driver1.getLeftX() * -1)
-      .withControllerRotationAxis(()->driver1.getRightX()*-1)
+      () -> driver1.getLeftY() * -1*swerveSpeed,
+      () -> driver1.getLeftX() * -1*swerveSpeed)
+      .withControllerRotationAxis(()->driver1.getRightX()*-1*swerveYawSpeed)
       .deadband(OperatorConstants.DEADBAND)
-      .scaleTranslation(swerveSpeed)
-      .scaleRotation(swerveYawSpeed)
       .allianceRelativeControl(true);
 
       SwerveInputStream angularSlow = SwerveInputStream.of(drivebase.getSwerveDrive(),
@@ -113,7 +111,7 @@ public class RobotContainer {
       () -> driver1.getLeftX() * -1)
       .withControllerRotationAxis(driver1::getRightX)
       .deadband(OperatorConstants.DEADBAND)
-      .scaleTranslation(swerveSpeed/2)
+      .scaleTranslation(swerveSpeed)
       .scaleRotation(swerveYawSpeed/2)
       .allianceRelativeControl(true);
 
@@ -176,13 +174,17 @@ public class RobotContainer {
     NamedCommands.registerCommand("go_L2", new setElevatorState(elevator, angleSubsystem, vision, 2));
     NamedCommands.registerCommand("go_L1", new setElevatorState(elevator, angleSubsystem, vision, 1));
     NamedCommands.registerCommand("shootTillNoCoral",shooter.ShooterShootSpecific(0.75).until(()->!shooter.IsCoral()));
+    NamedCommands.registerCommand("intake", new runIntakeUntilCoral(shooter));
 
 
     // Autonomous Chooser (Searchs auto folder)
+    autoChooser.setDefaultOption("do nothing", drivebase.getAutonomousCommand("do nothing"));
     autoChooser.setDefaultOption("hello", drivebase.getAutonomousCommand("hello"));
-    autoChooser.setDefaultOption("firstl4", drivebase.getAutonomousCommand("firstl4"));
+    autoChooser.setDefaultOption("firstl2", drivebase.getAutonomousCommand("firstl2"));
     autoChooser.setDefaultOption("taxi", drivebase.getAutonomousCommand("taxi"));
-    
+    autoChooser.setDefaultOption("l4king", drivebase.getAutonomousCommand("l4king"));
+    autoChooser.setDefaultOption("l4king", drivebase.getAutonomousCommand("l4king"));
+  
     if (listOfAutos != null) {
       for (int i = 0; i < listOfAutos.length; i++) {
         if (listOfAutos[i].isFile()) {
@@ -211,6 +213,17 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
+
+    if(elevator.getCurrentState()==4){
+      swerveSpeed=0.5;
+      swerveYawSpeed=0.3;
+    }else {
+      if(elevator.getCurrentState()==2){
+        swerveSpeed=1;
+        swerveYawSpeed=0.35;
+      }
+    }
+
      
 
     Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
@@ -235,7 +248,7 @@ public class RobotContainer {
 
 
     elevator.setDefaultCommand(elevator.holdAtSetpoint());
-    //angleSubsystem.setDefaultCommand(angleSubsystem.armHoldAsAngle());
+    angleSubsystem.setDefaultCommand(angleSubsystem.HoldArmAtSetpoint());
     shooter.setDefaultCommand(shooter.OtReisStop());
     s_led.setDefaultCommand(s_led.LedCommand());
 
@@ -293,11 +306,13 @@ public class RobotContainer {
       driver2.povLeft().onTrue(new algeaState(elevator, angleSubsystem, 2));//shoot
       driver2.povRight().onTrue(new algeaState(elevator, angleSubsystem, 1));//home
 
+      driver2.back().onTrue(angleSubsystem.setArmSetpoint(0));
+      driver2.start().onTrue(elevator.setSetpointOnce(0));
 
       //Driver 1 (Controller, swerve)p
 
       driver1.cross()
-        .whileTrue(vision.yawDrive(drivebase, driver1).onlyIf(()->vision.isAprilOnResult()));
+        .whileTrue(vision.allignDrive(drivebase, driver1).onlyIf(()->vision.isAprilOnResult()));
 
       driver1.circle().onTrue(Commands.runOnce(()->drivebase.zeroGyro()));
 
@@ -310,14 +325,13 @@ public class RobotContainer {
       driver1.L2().whileTrue(new runIntakeUntilCoral(shooter));
 
       driver1.R1()
-      .onTrue(Commands.runOnce(()->drivebase.setDefaultCommand(drivebase.driveFieldOriented(angularSlow))))
-        .onFalse(Commands.runOnce(()->drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity)));
+        .onTrue(Commands.runOnce(()->swerveYawSpeed/=2))
+        .onFalse(Commands.runOnce(()->swerveYawSpeed*=2));
 
+      driver1.L2()
+        .onTrue(Commands.runOnce(()->swerveSpeed/=2))
+        .onFalse(Commands.runOnce(()->swerveSpeed*=2));
 
-
-      
-      Trigger driverStationDisabled = new Trigger(DriverStation::isDisabled);
-      driverStationDisabled.onTrue(elevator.setSetpoint(0));
   
 
       //driver1.povLeft().whileTrue(climb.ClimbUp());
@@ -350,5 +364,6 @@ public class RobotContainer {
   {
     drivebase.setMotorBrake(brake);
   }
+
 
 }

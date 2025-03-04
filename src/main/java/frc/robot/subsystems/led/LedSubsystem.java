@@ -151,7 +151,7 @@ public class LedSubsystem extends SubsystemBase {
 
   public Command LedCommand() {
     return run(()->{
-      if(MathUtil.isNear(0.29, s_vision.getAprilY(), 0.02)){
+      if(IsAprilOk()){
         greenFlash();
       }else if(s_shooter.IsCoral()){
         allianceFlash();
@@ -159,6 +159,22 @@ public class LedSubsystem extends SubsystemBase {
         solidAllianceColor();
       }
     });
+  }
+
+  public boolean IsAprilOk(){
+    double rightX = 0.58;
+    double rightY = 0.26;
+
+    double leftX = 0.41;
+    double leftY = -0.03;
+    
+    if(MathUtil.isNear(leftX, s_vision.getAprilX(), 0.08) && MathUtil.isNear(leftY, s_vision.getAprilY(), 0.025)){
+      return true;
+    } else if(MathUtil.isNear(rightX, s_vision.getAprilX(), 0.08) && MathUtil.isNear(rightY, s_vision.getAprilY(), 0.025)) {
+      return true;
+    }
+    return false;
+
   }
 
   @Override

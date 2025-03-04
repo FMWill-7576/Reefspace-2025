@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.eUtil;
 import frc.robot.subsystems.arm.AngleSubsystem;
 
 public class Elevator extends SubsystemBase {
@@ -39,12 +40,14 @@ public class Elevator extends SubsystemBase {
   //For state change
   public static int currentIndex = 0;
 
+  public double swerveMultiplier = 1;
+
   public Elevator() {
     mainConfig
         .inverted(true)
         .smartCurrentLimit(ElevatorConstants.smartCurrent)
         .idleMode(IdleMode.kCoast)
-        .openLoopRampRate(0.25)
+        .openLoopRampRate(0)
         .closedLoopRampRate(0.15)
         .softLimit
           .reverseSoftLimitEnabled(true)
@@ -80,6 +83,14 @@ public class Elevator extends SubsystemBase {
         ArbFFUnits.kVoltage);
   }
 
+  public double getMultiplier(){
+    return swerveMultiplier;
+  }
+
+  public void setMultiplier(double set){
+    swerveMultiplier = set;
+  }
+
   public ElevatorFeedforward getLastestFeedforward() {
     ElevatorFeedforward newFeed = new ElevatorFeedforward(
       Preferences.getDouble(ElevatorConstants.kS_key, kS), 
@@ -95,6 +106,11 @@ public class Elevator extends SubsystemBase {
 
   public double getCurrentSetpoint() {
     return setpoint;
+  }
+
+  public void setIdleMode(IdleMode mode) {
+    mainConfig.idleMode(mode);
+
   }
 
   //State Holding
@@ -161,6 +177,22 @@ public class Elevator extends SubsystemBase {
 
   public Command setSetpoint(double set){
     return run(()->setpoint=0);
+  }
+
+  public Command setSetpointOnce(double set){
+    return runOnce(()->setpoint=0);
+  }
+
+  public double getEstimatedSpeedTranslation() {
+    double result = eUtil.map(getPosition(), 0, ElevatorConstants.maxPosition, 0.5, 1);
+    SmartDashboard.putNumber("trans speed", result);
+    return result;
+  }
+
+  public double getEstimatedSpeedRotation() {
+    double result = eUtil.map(getPosition(), 0, ElevatorConstants.maxPosition, 0.3, 0.5);
+    SmartDashboard.putNumber("rot speed", result);
+    return result;
   }
 
   public void elevUp() {
