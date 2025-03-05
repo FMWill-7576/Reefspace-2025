@@ -88,8 +88,8 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-     m_robotContainer.swerveSpeed = 1-m_robotContainer.elevator.getEstimatedSpeedTranslation();
-     m_robotContainer.swerveYawSpeed = 1-m_robotContainer.elevator.getEstimatedSpeedRotation();
+     m_robotContainer.swerveSpeed = m_robotContainer.elevator.getEstimatedSpeedTranslation();
+     m_robotContainer.swerveYawSpeed = m_robotContainer.elevator.getEstimatedSpeedRotation();
   }
 
   @Override

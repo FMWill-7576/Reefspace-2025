@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "l4 king"
+                  "pathName": "king_end_end"
                 }
               },
               {
@@ -27,7 +27,7 @@
                     {
                       "type": "named",
                       "data": {
-                        "name": "go_L3"
+                        "name": "go_l2"
                       }
                     }
                   ]
@@ -61,7 +61,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "l4 safe"
+                  "pathName": "king_end_safe"
                 }
               },
               {
@@ -89,13 +89,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "l4 continue"
+            "pathName": "king_end_continue"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "l4 last"
           }
         }
       ]

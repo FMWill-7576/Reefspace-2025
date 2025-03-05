@@ -3,51 +3,51 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.2227459016393443,
-        "y": 7.009938524590163
+        "x": 5.394467213114754,
+        "y": 5.990983606557377
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.4727459016393438,
-        "y": 7.009938524590163
+        "x": 5.644467213114754,
+        "y": 5.990983606557377
       },
       "isLocked": false,
-      "linkedName": "l4kingintake"
+      "linkedName": "kingendsafe"
     },
     {
       "anchor": {
-        "x": 2.4215163934426225,
-        "y": 6.050922131147542
+        "x": 3.6802254098360656,
+        "y": 6.9380122950819665
       },
       "prevControl": {
-        "x": 2.406231650451633,
-        "y": 6.30045444695393
+        "x": 4.675204918032787,
+        "y": 7.03391393442623
       },
       "nextControl": {
-        "x": 2.4368011364336124,
-        "y": 5.801389815341153
+        "x": 2.888269547169634,
+        "y": 6.861679199885201
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 3.35655737704918,
-        "y": 5.751229508196721
+        "x": 1.1867827868852459,
+        "y": 7.08186475409836
       },
       "prevControl": {
-        "x": 3.1065573770491803,
-        "y": 5.751229508196721
+        "x": 0.6867827868852459,
+        "y": 7.08186475409836
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "kinglastintake"
     }
   ],
   "rotationTargets": [
     {
       "waypointRelativePos": 2.0,
-      "rotationDegrees": 0.0
+      "rotationDegrees": 125.00000000000001
     }
   ],
   "constraintZones": [],

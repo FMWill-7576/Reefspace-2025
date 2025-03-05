@@ -3,53 +3,32 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.2227459016393443,
-        "y": 7.009938524590163
+        "x": 1.2706967213114755,
+        "y": 0.8962090163934431
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.4727459016393438,
-        "y": 7.009938524590163
+        "x": 1.5206967213114755,
+        "y": 0.8962090163934431
       },
       "isLocked": false,
-      "linkedName": "l4kingintake"
+      "linkedName": "kingstartintakego"
     },
     {
       "anchor": {
-        "x": 2.4215163934426225,
-        "y": 6.050922131147542
+        "x": 3.3445696721311475,
+        "y": 2.466598360655738
       },
       "prevControl": {
-        "x": 2.406231650451633,
-        "y": 6.30045444695393
-      },
-      "nextControl": {
-        "x": 2.4368011364336124,
-        "y": 5.801389815341153
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 3.35655737704918,
-        "y": 5.751229508196721
-      },
-      "prevControl": {
-        "x": 3.1065573770491803,
-        "y": 5.751229508196721
+        "x": 3.0945696721311475,
+        "y": 2.466598360655738
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 2.0,
-      "rotationDegrees": 0.0
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],

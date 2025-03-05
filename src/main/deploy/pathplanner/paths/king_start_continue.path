@@ -3,54 +3,68 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.2227459016393443,
-        "y": 7.009938524590163
+        "x": 5.5383196721311485,
+        "y": 2.047028688524591
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.4727459016393438,
-        "y": 7.009938524590163
+        "x": 5.7883196721311485,
+        "y": 2.0470286885245907
       },
       "isLocked": false,
-      "linkedName": "l4kingintake"
+      "linkedName": "kingstartsafe"
     },
     {
       "anchor": {
-        "x": 2.4215163934426225,
-        "y": 6.050922131147542
+        "x": 3.2366803278688523,
+        "y": 1.411680327868852
       },
       "prevControl": {
-        "x": 2.406231650451633,
-        "y": 6.30045444695393
+        "x": 3.485724008856158,
+        "y": 1.389834390940141
       },
       "nextControl": {
-        "x": 2.4368011364336124,
-        "y": 5.801389815341153
+        "x": 2.003150484026209,
+        "y": 1.5198847001357494
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 3.35655737704918,
-        "y": 5.751229508196721
+        "x": 1.2706967213114755,
+        "y": 0.8962090163934431
       },
       "prevControl": {
-        "x": 3.1065573770491803,
-        "y": 5.751229508196721
+        "x": 1.0206967213114755,
+        "y": 0.8962090163934431
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "kingstartintakego"
     }
   ],
   "rotationTargets": [
     {
       "waypointRelativePos": 2.0,
-      "rotationDegrees": 0.0
+      "rotationDegrees": -125.00000000000001
     }
   ],
-  "constraintZones": [],
+  "constraintZones": [
+    {
+      "name": "Constraints Zone",
+      "minWaypointRelativePos": 1.4976258309591617,
+      "maxWaypointRelativePos": 2.0,
+      "constraints": {
+        "maxVelocity": 1.0,
+        "maxAcceleration": 1.0,
+        "maxAngularVelocity": 540.0,
+        "maxAngularAcceleration": 720.0,
+        "nominalVoltage": 12.0,
+        "unlimited": false
+      }
+    }
+  ],
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {

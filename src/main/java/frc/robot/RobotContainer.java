@@ -182,8 +182,18 @@ public class RobotContainer {
     autoChooser.setDefaultOption("hello", drivebase.getAutonomousCommand("hello"));
     autoChooser.setDefaultOption("firstl2", drivebase.getAutonomousCommand("firstl2"));
     autoChooser.setDefaultOption("taxi", drivebase.getAutonomousCommand("taxi"));
-    autoChooser.setDefaultOption("l4king", drivebase.getAutonomousCommand("l4king"));
-    autoChooser.setDefaultOption("l4king", drivebase.getAutonomousCommand("l4king"));
+
+    autoChooser.setDefaultOption("l3king_last", drivebase.getAutonomousCommand("l3king_last"));
+    autoChooser.setDefaultOption("l4king_middle", drivebase.getAutonomousCommand("l4king_middle"));
+    autoChooser.setDefaultOption("l3king_1", drivebase.getAutonomousCommand("l3king_1"));
+    autoChooser.setDefaultOption("l3king_2", drivebase.getAutonomousCommand("l3king_2"));
+    autoChooser.setDefaultOption("l3king_3", drivebase.getAutonomousCommand("l3king_3"));
+
+    autoChooser.setDefaultOption("l3king_start_3", drivebase.getAutonomousCommand("l3king_start_3"));
+    autoChooser.setDefaultOption("l3king_start_1", drivebase.getAutonomousCommand("l3king_start_2"));
+    autoChooser.setDefaultOption("l3king_start_1", drivebase.getAutonomousCommand("l3king_start_1"));
+    autoChooser.setDefaultOption("l3king_touch", drivebase.getAutonomousCommand("l3king_touch"));
+  
   
     if (listOfAutos != null) {
       for (int i = 0; i < listOfAutos.length; i++) {
@@ -211,20 +221,7 @@ public class RobotContainer {
    * controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick
    * Flight joysticks}.
    */
-  private void configureBindings() {
-
-
-    if(elevator.getCurrentState()==4){
-      swerveSpeed=0.5;
-      swerveYawSpeed=0.3;
-    }else {
-      if(elevator.getCurrentState()==2){
-        swerveSpeed=1;
-        swerveYawSpeed=0.35;
-      }
-    }
-
-     
+  private void configureBindings() {     
 
     Command driveFieldOrientedDirectAngle      = drivebase.driveFieldOriented(driveDirectAngle);
     Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
@@ -316,8 +313,8 @@ public class RobotContainer {
 
       driver1.circle().onTrue(Commands.runOnce(()->drivebase.zeroGyro()));
 
-      driver1.povRight().whileTrue(shooter.ShooterShootSpecific(0.1));
-      driver1.povLeft().whileTrue(shooter.ShooterShootSpecific(-0.1));
+      driver1.povLeft().whileTrue(shooter.ShooterShootSpecific(0.1));
+      driver1.povRight().whileTrue(shooter.ShooterShootSpecific(-0.1));
 
       driver1.triangle().whileTrue(shooter.ShooterShootSpecific(-0.5));
 
@@ -325,12 +322,10 @@ public class RobotContainer {
       driver1.L2().whileTrue(new runIntakeUntilCoral(shooter));
 
       driver1.R1()
-        .onTrue(Commands.runOnce(()->swerveYawSpeed/=2))
-        .onFalse(Commands.runOnce(()->swerveYawSpeed*=2));
+      .onTrue(new setElevatorState(elevator,angleSubsystem,vision,4).onlyIf(()->vision.getAprilDistance()>0.95));
 
-      driver1.L2()
-        .onTrue(Commands.runOnce(()->swerveSpeed/=2))
-        .onFalse(Commands.runOnce(()->swerveSpeed*=2));
+      driver1.L1()
+      .onTrue(new setElevatorState(elevator,angleSubsystem,vision,1).onlyIf(()->vision.getAprilDistance()>0.95));
 
   
 

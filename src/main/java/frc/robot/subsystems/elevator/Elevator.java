@@ -184,13 +184,13 @@ public class Elevator extends SubsystemBase {
   }
 
   public double getEstimatedSpeedTranslation() {
-    double result = eUtil.map(getPosition(), 0, ElevatorConstants.maxPosition, 0.5, 1);
+    double result = eUtil.map(getPosition(), 0, ElevatorConstants.maxPosition, 1, 0.5);
     SmartDashboard.putNumber("trans speed", result);
     return result;
   }
 
   public double getEstimatedSpeedRotation() {
-    double result = eUtil.map(getPosition(), 0, ElevatorConstants.maxPosition, 0.3, 0.5);
+    double result = eUtil.map(getPosition(), 0, ElevatorConstants.maxPosition, 0.7, 0.3);
     SmartDashboard.putNumber("rot speed", result);
     return result;
   }
