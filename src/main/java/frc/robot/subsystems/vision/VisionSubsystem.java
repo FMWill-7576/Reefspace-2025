@@ -88,15 +88,15 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     public double getAprilDistance() {
-        if(isApril && isValidApril) {
-           return currentTarget.getBestCameraToTarget().getX();
-        }else {
+        if (isApril && isValidApril) {
+            return currentTarget.getBestCameraToTarget().getX();
+        } else {
             return 99.0;
         }
-        
+
     }
 
-    public boolean isAprilOnSight(){
+    public boolean isAprilOnSight() {
         return isValidApril;
     }
 
@@ -107,29 +107,28 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     public double getAprilY() {
-        if(isApril && isValidApril) {
+        if (isApril && isValidApril) {
             return currentTarget.getBestCameraToTarget().getY();
-         }else {
-             return 99.0;
-         }
+        } else {
+            return 99.0;
+        }
     }
 
     public double getAprilX() {
-        if(isApril && isValidApril) {
+        if (isApril && isValidApril) {
             return currentTarget.getBestCameraToTarget().getX();
-         }else {
-             return 99.0;
-         }
+        } else {
+            return 99.0;
+        }
     }
 
     public double getAprilZ() {
-        if(isApril && isValidApril) {
+        if (isApril && isValidApril) {
             return currentTarget.getBestCameraToTarget().getRotation().getAngle();
-         }else {
-             return 99.0;
-         }
+        } else {
+            return 99.0;
+        }
     }
-    
 
     public Command yawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
         double desiredYaw = aprilyaw + VisionConstants.yaw;
@@ -147,37 +146,50 @@ public class VisionSubsystem extends SubsystemBase {
         });
     }
 
-    public Command allignDrive(SwerveSubsystem swerve, CommandPS5Controller controller){
+    public Command allignDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
         double goal = 163;
-        double desired = goal;
-            return run(()->
-            swerve.drive(
+        return run(() -> swerve.drive(
                 swerve.getTargetSpeeds(
-                    controller.getLeftX()*-1*0.5, 
-                    controller.getLeftY()*0.5, 
-                    Rotation2d.fromDegrees(goal)
-                )));
-    
+                        controller.getLeftX() * -1 * 0.5,
+                        controller.getLeftY() * 0.5,
+                        Rotation2d.fromDegrees(goal))));
+
+    }
+
+    public Command allignDataDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
+        if (isApril) {
+            Optional<Pose3d> aprilPose3d = aprilTagFieldLayout.getTagPose(currentTarget.getFiducialId());
+            if(aprilPose3d.isPresent() && eUtil.isIntExistsInArray(currentTarget.getFiducialId(), VisionConstants.reefIDs)){
+                return run(() -> swerve.drive(
+                    swerve.getTargetSpeeds(
+                            controller.getLeftX() * -1 * 0.5,
+                            controller.getLeftY() * 0.5,
+                            Rotation2d.fromRotations(aprilPose3d.get().toPose2d().getRotation().getRotations()))));
+            }
+        }
+        return run(() -> {
+        });
     }
 
     public Command forwardYawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
         double desiredYaw = aprilyaw + VisionConstants.yaw;
         double distance = PhotonUtils.calculateDistanceToTargetMeters(
-                                        VisionConstants.cameraHeigthtMeters, // Measured with a tape measure, or in CAD.
-                                        VisionConstants.aprilHeightInfo(currentTarget.getFiducialId()), // From 2024 game manual for ID 7
-                                        VisionConstants.cameraPitchInRadians, // Measured with a protractor, or in CAD.
-                                        Units.degreesToRadians(currentTarget.getPitch()));
+                VisionConstants.cameraHeigthtMeters, // Measured with a tape measure, or in CAD.
+                VisionConstants.aprilHeightInfo(currentTarget.getFiducialId()), // From 2024 game manual for ID 7
+                VisionConstants.cameraPitchInRadians, // Measured with a protractor, or in CAD.
+                Units.degreesToRadians(currentTarget.getPitch()));
         if (isApril) {
             return swerve.driveFieldOriented(
                     SwerveInputStream.of(swerve.getSwerveDrive(),
-                            () -> MathUtil.clamp(forwardPID.calculate(distance, 0.1), -1, 1) *.25,
+                            () -> MathUtil.clamp(forwardPID.calculate(distance, 0.1), -1, 1) * .25,
                             () -> controller.getLeftX())
                             .withControllerRotationAxis(() -> MathUtil.clamp(turnPID.calculate(desiredYaw, 0), -1, 1)
                                     * 0.25 * -1)
                             .deadband(OperatorConstants.DEADBAND)
                             .scaleTranslation(1));
         }
-        return Commands.run(()->{});
+        return Commands.run(() -> {
+        });
     }
 
     public boolean IsAtDesiredYaw(double desired, double actual) {
@@ -202,13 +214,13 @@ public class VisionSubsystem extends SubsystemBase {
                         aprilyaw = target.getYaw();
                         isApril = true;
                         currentTarget = target;
-                        if(target.getFiducialId()!=-1){
+                        if (target.getFiducialId() != -1) {
                             isValidApril = true;
-                            //SmartDashboard.putNumber("April distance", getAprilDistance());
+                            // SmartDashboard.putNumber("April distance", getAprilDistance());
                             SmartDashboard.putNumber("get current x", target.getBestCameraToTarget().getX());
                             SmartDashboard.putNumber("get cam y", getAprilY());
                             SmartDashboard.putNumber("get z ", getAprilZ());
-                        }else {
+                        } else {
                             isValidApril = false;
                         }
                         break;
