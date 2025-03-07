@@ -30,12 +30,11 @@ public class VisionSubsystem extends SubsystemBase {
         return LimelightHelpers.getTX(limelightName);
     }
 
+    /*
+     * Use for distance
+     */
     public double getArea() {
         return LimelightHelpers.getTX(limelightName);
-    }
-
-    public double getDistance() {
-        return LimelightHelpers.getTY(limelightName);
     }
 
     public int getAprilTagID() {
