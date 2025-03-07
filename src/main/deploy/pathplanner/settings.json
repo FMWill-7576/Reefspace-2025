@@ -3,9 +3,12 @@
   "robotLength": 0.87,
   "holonomicMode": true,
   "pathFolders": [
-    "New Folder"
+    "regional 2 practice",
+    "idk singles"
   ],
-  "autoFolders": [],
+  "autoFolders": [
+    "regional 2"
+  ],
   "defaultMaxVel": 3.0,
   "defaultMaxAccel": 3.0,
   "defaultMaxAngVel": 540.0,

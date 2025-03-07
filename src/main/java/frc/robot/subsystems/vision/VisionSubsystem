@@ -59,7 +59,7 @@ public class VisionSubsystem extends SubsystemBase {
     boolean isValidApril = false;
     boolean isApril = false;
 
-    PIDController turnPID = new PIDController(0.1, 0, 0.02);
+    PIDController turnPID = new PIDController(1, 0, 0);
     PIDController forwardPID = new PIDController(1, 0, 0);
 
     public VisionSubsystem() {
@@ -124,7 +124,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     public double getAprilZ() {
         if (isApril && isValidApril) {
-            return currentTarget.getBestCameraToTarget().getRotation().getAngle();
+            return Math.toDegrees(currentTarget.getBestCameraToTarget().getRotation().getAngle());
         } else {
             return 99.0;
         }
@@ -132,7 +132,6 @@ public class VisionSubsystem extends SubsystemBase {
 
     public Command yawDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
         double desiredYaw = aprilyaw + VisionConstants.yaw;
-        if (isApril) {
             return swerve.driveFieldOriented(
                     SwerveInputStream.of(swerve.getSwerveDrive(),
                             () -> controller.getLeftY(),
@@ -141,30 +140,48 @@ public class VisionSubsystem extends SubsystemBase {
                                     * 0.25 * -1)
                             .deadband(OperatorConstants.DEADBAND)
                             .scaleTranslation(1));
-        }
-        return Commands.run(() -> {
-        });
     }
 
     public Command allignDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
-        double goal = 163;
-        return run(() -> swerve.drive(
-                swerve.getTargetSpeeds(
-                        controller.getLeftX() * -1 * 0.5,
-                        controller.getLeftY() * 0.5,
-                        Rotation2d.fromDegrees(goal))));
+        double goal = 204;
+        PIDController pid = new PIDController(1, 0, 0);
+        double output = (MathUtil.clamp(pid.calculate(getAprilZ(), goal), -1, 1)
+        * 0.25);
+        pid.close();
+        SmartDashboard.putNumber("pid turn", output);
+        return swerve.driveFieldOriented(
+                SwerveInputStream.of(swerve.getSwerveDrive(),
+                        () -> controller.getLeftY(),
+                        () -> controller.getLeftX())
+                        .withControllerRotationAxis(() -> output)
+                        .deadband(OperatorConstants.DEADBAND)
+                        .scaleTranslation(1));
+
+    }
+
+    public Command PIDAlligment(SwerveSubsystem swerve, CommandPS5Controller controller) {
+        double goal = 204;
+        double current = getAprilZ();
+        double turnOutput = MathUtil.clamp(turnPID.calculate(cur
+        rent, goal),-0.5,0.5) * -1;
+        SmartDashboard.putNumber("pid turn", turnOutput);
+        return swerve.driveCommand(
+                () -> controller.getLeftX() * -1,
+                () -> controller.getLeftY(),
+                () -> turnOutput);
 
     }
 
     public Command allignDataDrive(SwerveSubsystem swerve, CommandPS5Controller controller) {
         if (isApril) {
             Optional<Pose3d> aprilPose3d = aprilTagFieldLayout.getTagPose(currentTarget.getFiducialId());
-            if(aprilPose3d.isPresent() && eUtil.isIntExistsInArray(currentTarget.getFiducialId(), VisionConstants.reefIDs)){
+            if (aprilPose3d.isPresent()
+                    && eUtil.isIntExistsInArray(currentTarget.getFiducialId(), VisionConstants.reefIDs)) {
                 return run(() -> swerve.drive(
-                    swerve.getTargetSpeeds(
-                            controller.getLeftX() * -1 * 0.5,
-                            controller.getLeftY() * 0.5,
-                            Rotation2d.fromRotations(aprilPose3d.get().toPose2d().getRotation().getRotations()))));
+                        swerve.getTargetSpeeds(
+                                controller.getLeftX() * -1 * 0.5,
+                                controller.getLeftY() * 0.5,
+                                Rotation2d.fromRotations(aprilPose3d.get().toPose2d().getRotation().getRotations()))));
             }
         }
         return run(() -> {

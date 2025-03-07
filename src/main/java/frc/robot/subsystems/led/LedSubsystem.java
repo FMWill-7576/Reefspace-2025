@@ -35,7 +35,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.arm.ShooterSubsystem;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorConstants;
-import frc.robot.subsystems.vision.VisionSubsystem;
 import swervelib.SwerveDrive;
 
 public class LedSubsystem extends SubsystemBase {
@@ -52,14 +51,13 @@ public class LedSubsystem extends SubsystemBase {
 
 
   private Elevator s_elevator;
-  private VisionSubsystem s_vision;
+  //private VisionSubsystem s_vision;
   private ShooterSubsystem s_shooter;
 
 
 
-  public LedSubsystem(Elevator elev, VisionSubsystem vision,ShooterSubsystem shooter) {
+  public LedSubsystem(Elevator elev,ShooterSubsystem shooter) {
     s_elevator = elev;
-    s_vision=vision;
     s_shooter = shooter;
     // Insider led
     insideLed = new AddressableLED(0);
@@ -151,7 +149,7 @@ public class LedSubsystem extends SubsystemBase {
 
   public Command LedCommand() {
     return run(()->{
-      if(IsAprilOk()){
+      if(false){
         greenFlash();
       }else if(s_shooter.IsCoral()){
         allianceFlash();
@@ -161,6 +159,7 @@ public class LedSubsystem extends SubsystemBase {
     });
   }
 
+  /*
   public boolean IsAprilOk(){
     double rightX = 0.58;
     double rightY = 0.26;
@@ -176,6 +175,7 @@ public class LedSubsystem extends SubsystemBase {
     return false;
 
   }
+  */
 
   @Override
   public void periodic() {

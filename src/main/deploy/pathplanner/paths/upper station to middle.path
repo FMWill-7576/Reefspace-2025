@@ -3,35 +3,35 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.6,
-        "y": 1.9031762295081978
+        "x": 1.23825,
+        "y": 7.11575
       },
       "prevControl": null,
       "nextControl": {
-        "x": 7.85,
-        "y": 1.9031762295081978
+        "x": 1.48825,
+        "y": 7.11575
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "upper station"
     },
     {
       "anchor": {
-        "x": 5.478381147540984,
-        "y": 2.6464139344262296
+        "x": 2.4472500000000004,
+        "y": 4.09325
       },
       "prevControl": {
-        "x": 5.228381147540984,
-        "y": 2.6464139344262296
+        "x": 2.1972500000000004,
+        "y": 4.09325
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "kingstartfirst"
+      "linkedName": null
     }
   ],
   "rotationTargets": [
     {
       "waypointRelativePos": 1.0,
-      "rotationDegrees": -59.99999999999999
+      "rotationDegrees": 180.0
     }
   ],
   "constraintZones": [],
@@ -50,7 +50,7 @@
     "rotation": 0.0
   },
   "reversed": false,
-  "folder": null,
+  "folder": "regional 2 practice",
   "idealStartingState": {
     "velocity": 0,
     "rotation": 0.0

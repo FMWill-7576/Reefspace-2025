@@ -10,10 +10,11 @@ import frc.robot.subsystems.elevator.Elevator;
 
 public class safeElevator extends SequentialCommandGroup
 {
-    public safeElevator(Elevator elevator,AngleSubsystem angle,double goal) {
+    public safeElevator(Elevator elevator,AngleSubsystem angle,double elevgoal,double armgoal) {
         addCommands(
-           angle.setAngleCommand(0.6),
-           elevator.setgoal(goal)
+           angle.setAngleCommand(ArmConstants.safeSetpoint),
+           elevator.setgoal(elevgoal),
+           angle.setAngleCommand(armgoal)
         );
     }
 }

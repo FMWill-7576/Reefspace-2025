@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.Preferences;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.elevatorArm.algaeChaos;
 import frc.robot.commands.elevatorArm.algeaState;
 import frc.robot.commands.elevatorArm.runIntakeUntilCoral;
 import frc.robot.commands.elevatorArm.safeElevator;
@@ -46,7 +47,6 @@ import frc.robot.subsystems.led.LedSubsystem;
 // garip hata import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.swervedrive.Vision;
-import frc.robot.subsystems.vision.VisionSubsystem;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -80,9 +80,8 @@ public class RobotContainer {
   public final Elevator elevator = new Elevator();
   private final AngleSubsystem angleSubsystem = new AngleSubsystem();
   private final ShooterSubsystem shooter = new ShooterSubsystem();
-  private final VisionSubsystem vision = new VisionSubsystem();
   //private final ClimbSubsystem climb = new ClimbSubsystem();
-  private final LedSubsystem s_led = new LedSubsystem(elevator,vision,shooter);
+  private final LedSubsystem s_led = new LedSubsystem(elevator,shooter);
 
   double swerveYawSpeed;
   double swerveSpeed;
@@ -169,30 +168,33 @@ public class RobotContainer {
 
     DriverStation.silenceJoystickConnectionWarning(true);
 
-    NamedCommands.registerCommand("go_L4", new setElevatorState(elevator, angleSubsystem, vision, 4));
-    NamedCommands.registerCommand("go_L3", new setElevatorState(elevator, angleSubsystem, vision, 3));
-    NamedCommands.registerCommand("go_L2", new setElevatorState(elevator, angleSubsystem, vision, 2));
-    NamedCommands.registerCommand("go_L1", new setElevatorState(elevator, angleSubsystem, vision, 1));
+    NamedCommands.registerCommand("go_L4", new setElevatorState(elevator, angleSubsystem, 4));
+    NamedCommands.registerCommand("go_L3", new setElevatorState(elevator, angleSubsystem, 3));
+    NamedCommands.registerCommand("go_L2", new setElevatorState(elevator, angleSubsystem, 2));
+    NamedCommands.registerCommand("go_L1", new setElevatorState(elevator, angleSubsystem, 1));
     NamedCommands.registerCommand("shootTillNoCoral",shooter.ShooterShootSpecific(0.75).until(()->!shooter.IsCoral()));
     NamedCommands.registerCommand("intake", new runIntakeUntilCoral(shooter));
+    NamedCommands.registerCommand("algaeChaos", new algaeChaos(elevator,angleSubsystem));
 
 
     // Autonomous Chooser (Searchs auto folder)
     autoChooser.setDefaultOption("do nothing", drivebase.getAutonomousCommand("do nothing"));
-    autoChooser.setDefaultOption("hello", drivebase.getAutonomousCommand("hello"));
-    autoChooser.setDefaultOption("firstl2", drivebase.getAutonomousCommand("firstl2"));
-    autoChooser.setDefaultOption("taxi", drivebase.getAutonomousCommand("taxi"));
+    autoChooser.addOption("hello", drivebase.getAutonomousCommand("hello"));
+    autoChooser.addOption("firstl2", drivebase.getAutonomousCommand("firstl2"));
+    autoChooser.addOption("taxi", drivebase.getAutonomousCommand("taxi"));
 
-    autoChooser.setDefaultOption("l3king_last", drivebase.getAutonomousCommand("l3king_last"));
-    autoChooser.setDefaultOption("l4king_middle", drivebase.getAutonomousCommand("l4king_middle"));
-    autoChooser.setDefaultOption("l3king_1", drivebase.getAutonomousCommand("l3king_1"));
-    autoChooser.setDefaultOption("l3king_2", drivebase.getAutonomousCommand("l3king_2"));
-    autoChooser.setDefaultOption("l3king_3", drivebase.getAutonomousCommand("l3king_3"));
+    autoChooser.addOption("l3king_last", drivebase.getAutonomousCommand("l3king_last"));
+    autoChooser.addOption("l4king_middle", drivebase.getAutonomousCommand("l4king_middle"));
+    autoChooser.addOption("l3king_1", drivebase.getAutonomousCommand("l3king_1"));
+    autoChooser.addOption("l3king_2", drivebase.getAutonomousCommand("l3king_2"));
+    autoChooser.addOption("l3king_3", drivebase.getAutonomousCommand("l3king_3"));
 
-    autoChooser.setDefaultOption("l3king_start_3", drivebase.getAutonomousCommand("l3king_start_3"));
-    autoChooser.setDefaultOption("l3king_start_1", drivebase.getAutonomousCommand("l3king_start_2"));
-    autoChooser.setDefaultOption("l3king_start_1", drivebase.getAutonomousCommand("l3king_start_1"));
-    autoChooser.setDefaultOption("l3king_touch", drivebase.getAutonomousCommand("l3king_touch"));
+    autoChooser.addOption("AlgaeChaosUpper", drivebase.getAutonomousCommand("AlgaeChaosUpper"));
+    autoChooser.addOption("AlgaeChaosBottom", drivebase.getAutonomousCommand("AlgaeChaosUpper"));
+    autoChooser.addOption("short taxi", drivebase.getAutonomousCommand("short taxi"));
+    autoChooser.addOption("go middle", drivebase.getAutonomousCommand("go middle"));
+    autoChooser.addOption("middle l4", drivebase.getAutonomousCommand("middle4"));
+    autoChooser.addOption("middle activity", drivebase.getAutonomousCommand("middle activity"));
   
   
     if (listOfAutos != null) {
@@ -293,10 +295,10 @@ public class RobotContainer {
       driver2.leftTrigger().whileTrue(new runIntakeUntilCoral(shooter));
       driver2.rightTrigger().whileTrue(shooter.ShooterShootSpecific(0.75));
 
-      driver2.a().onTrue(new setElevatorState(elevator,angleSubsystem,vision,1).onlyIf(()->vision.getAprilDistance()>0.87));
-      driver2.b().onTrue(new setElevatorState(elevator,angleSubsystem,vision,2).onlyIf(()->vision.getAprilDistance()>0.87));
-      driver2.y().onTrue(new setElevatorState(elevator,angleSubsystem,vision,3).onlyIf(()->vision.getAprilDistance()>0.87));
-      driver2.x().onTrue(new setElevatorState(elevator,angleSubsystem,vision,4).onlyIf(()->vision.getAprilDistance()>0.95));
+      driver2.a().onTrue(new setElevatorState(elevator,angleSubsystem,1));
+      driver2.b().onTrue(new setElevatorState(elevator,angleSubsystem,2));
+      driver2.y().onTrue(new setElevatorState(elevator,angleSubsystem,3));
+      driver2.x().onTrue(new setElevatorState(elevator,angleSubsystem,4));
 
       driver2.leftBumper().onTrue(new algeaState(elevator, angleSubsystem, 4));//algea max
       driver2.rightBumper().onTrue(new algeaState(elevator, angleSubsystem, 3));//algea min
@@ -308,24 +310,22 @@ public class RobotContainer {
 
       //Driver 1 (Controller, swerve)p
 
-      driver1.cross()
-        .whileTrue(vision.allignDrive(drivebase, driver1).onlyIf(()->vision.isAprilOnResult()));
-
       driver1.circle().onTrue(Commands.runOnce(()->drivebase.zeroGyro()));
 
       driver1.povLeft().whileTrue(shooter.ShooterShootSpecific(0.1));
       driver1.povRight().whileTrue(shooter.ShooterShootSpecific(-0.1));
 
       driver1.triangle().whileTrue(shooter.ShooterShootSpecific(-0.5));
+      driver1.povUp().onTrue(new safeElevator(elevator, angleSubsystem, 3.26, 1.14));
 
       driver1.R2().whileTrue(shooter.ShooterShootSpecific(0.75));
       driver1.L2().whileTrue(new runIntakeUntilCoral(shooter));
 
       driver1.R1()
-      .onTrue(new setElevatorState(elevator,angleSubsystem,vision,4).onlyIf(()->vision.getAprilDistance()>0.95));
+      .onTrue(new setElevatorState(elevator,angleSubsystem,4));
 
       driver1.L1()
-      .onTrue(new setElevatorState(elevator,angleSubsystem,vision,1).onlyIf(()->vision.getAprilDistance()>0.95));
+      .onTrue(new setElevatorState(elevator,angleSubsystem,1));
 
   
 

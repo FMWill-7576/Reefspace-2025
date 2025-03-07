@@ -6,10 +6,9 @@ import frc.robot.subsystems.arm.AngleSubsystem;
 import frc.robot.subsystems.arm.ArmConstants;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorConstants;
-import frc.robot.subsystems.vision.VisionSubsystem;
 
 public class setElevatorState extends SequentialCommandGroup {
-    public setElevatorState(Elevator elev, AngleSubsystem angle, VisionSubsystem vision,int state) {
+    public setElevatorState(Elevator elev, AngleSubsystem angle,int state) {
         addCommands(
 
                 angle.setAngleCommand(ArmConstants.safeSetpoint)
