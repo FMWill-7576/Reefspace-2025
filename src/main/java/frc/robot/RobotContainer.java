@@ -99,9 +99,11 @@ public class RobotContainer {
  
 
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-      () -> driver1.getLeftY() * -1*swerveSpeed,
-      () -> driver1.getLeftX() * -1*swerveSpeed)
-      .withControllerRotationAxis(()->driver1.getRightX()*-1*swerveYawSpeed)
+      () -> driver1.getLeftY() * -1,
+      () -> driver1.getLeftX() * -1)
+      .withControllerRotationAxis(driver1::getRightX)
+      .scaleRotation(swerveYawSpeed)
+      .scaleTranslation(swerveSpeed)
       .deadband(OperatorConstants.DEADBAND)
       .allianceRelativeControl(true);
 
@@ -235,6 +237,8 @@ public class RobotContainer {
     Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
         driveDirectAngleKeyboard);
 
+    Command driveNstrike = drivebase.drive(driveAngularVelocity);
+
 
 
     Command driveManipulated = drivebase.driveCommand(
@@ -260,7 +264,7 @@ public class RobotContainer {
     }
     if (DriverStation.isTest()) {
 
-      drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity); // Overrides drive command above!
+      drivebase.setDefaultCommand(driveNstrike); // Overrides drive command above!
 
     } else {
 

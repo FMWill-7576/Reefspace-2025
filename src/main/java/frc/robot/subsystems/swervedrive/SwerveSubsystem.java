@@ -512,6 +512,17 @@ public class SwerveSubsystem extends SubsystemBase
     swerveDrive.drive(velocity);
   }
 
+  /*
+   * 
+   * nstrike hi
+   * 
+   */
+  public Command drive(Supplier<ChassisSpeeds> driveAngularVelocity) {
+    return run(()-> {
+      swerveDrive.drive(driveAngularVelocity.get());
+    });
+  }
+
 
   /**
    * Get the swerve drive kinematics object.
