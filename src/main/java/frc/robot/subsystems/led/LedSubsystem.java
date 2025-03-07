@@ -161,23 +161,6 @@ public class LedSubsystem extends SubsystemBase {
     });
   }
 
-  /*
-  public boolean IsAprilOk(){
-    double rightX = 0.58;
-    double rightY = 0.26;
-
-    double leftX = 0.41;
-    double leftY = -0.03;
-    
-    if(MathUtil.isNear(leftX, s_vision.getAprilX(), 0.08) && MathUtil.isNear(leftY, s_vision.getAprilY(), 0.025)){
-      return true;
-    } else if(MathUtil.isNear(rightX, s_vision.getAprilX(), 0.08) && MathUtil.isNear(rightY, s_vision.getAprilY(), 0.025)) {
-      return true;
-    }
-    return false;
-
-  }
-  */
 
   @Override
   public void periodic() {
