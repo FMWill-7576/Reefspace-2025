@@ -42,6 +42,9 @@ public class VisionConstants {
     public static double rightArea = 10;
     public static double rightHorizontalOffset = 6;
 
+    public static double areaTolerance = 0;
+    public static double horizontalTolerance = 0;
+
     public static double aprilHeightInfo(int key){
         HashMap<Integer, Double> h = new HashMap<>();
         

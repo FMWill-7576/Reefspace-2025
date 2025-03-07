@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.arm.ShooterSubsystem;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorConstants;
+import frc.robot.subsystems.vision.VisionSubsystem;
 import swervelib.SwerveDrive;
 
 public class LedSubsystem extends SubsystemBase {
@@ -51,14 +52,15 @@ public class LedSubsystem extends SubsystemBase {
 
 
   private Elevator s_elevator;
-  //private VisionSubsystem s_vision;
+  private VisionSubsystem s_vision;
   private ShooterSubsystem s_shooter;
 
 
 
-  public LedSubsystem(Elevator elev,ShooterSubsystem shooter) {
+  public LedSubsystem(Elevator elev,ShooterSubsystem shooter, VisionSubsystem vision) {
     s_elevator = elev;
     s_shooter = shooter;
+    s_vision = vision;
     // Insider led
     insideLed = new AddressableLED(0);
     insideLed_buffer = new AddressableLEDBuffer(Insidelenght);
@@ -128,8 +130,8 @@ public class LedSubsystem extends SubsystemBase {
     insideLed.setData(insideLed_buffer);
   }
 
-  public void CoralLed() {
-    LEDPattern pattern = LEDPattern.solid(Color.kDarkOrange).blink(Seconds.of(0.25));
+  public void CoralLed() { 
+    LEDPattern pattern = LEDPattern.solid(Color.kSlateGray).blink(Seconds.of(0.25));
     pattern.applyTo(insideLed_buffer);
     insideLed.setData(insideLed_buffer);
   }
@@ -149,10 +151,10 @@ public class LedSubsystem extends SubsystemBase {
 
   public Command LedCommand() {
     return run(()->{
-      if(false){
+      if(s_vision.CanShootVision()){
         greenFlash();
       }else if(s_shooter.IsCoral()){
-        allianceFlash();
+        CoralLed();
       }else{
         solidAllianceColor();
       }

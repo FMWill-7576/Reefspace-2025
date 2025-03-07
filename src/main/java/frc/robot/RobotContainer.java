@@ -47,6 +47,7 @@ import frc.robot.subsystems.led.LedSubsystem;
 // garip hata import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.swervedrive.Vision;
+import frc.robot.subsystems.vision.VisionSubsystem;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -81,7 +82,8 @@ public class RobotContainer {
   private final AngleSubsystem angleSubsystem = new AngleSubsystem();
   private final ShooterSubsystem shooter = new ShooterSubsystem();
   //private final ClimbSubsystem climb = new ClimbSubsystem();
-  private final LedSubsystem s_led = new LedSubsystem(elevator,shooter);
+  private final VisionSubsystem s_vision = new VisionSubsystem();
+  private final LedSubsystem s_led = new LedSubsystem(elevator,shooter,s_vision);
 
   double swerveYawSpeed;
   double swerveSpeed;
@@ -316,8 +318,11 @@ public class RobotContainer {
 
       driver1.circle().onTrue(Commands.runOnce(()->drivebase.zeroGyro()));
 
-      driver1.povLeft().whileTrue(shooter.ShooterShootSpecific(0.1));
-      driver1.povRight().whileTrue(shooter.ShooterShootSpecific(-0.1));
+      driver1.povDown().whileTrue(shooter.ShooterShootSpecific(0.1));
+      driver1.povUp().whileTrue(shooter.ShooterShootSpecific(-0.1));
+
+      driver1.povRight().whileTrue(s_vision.driveRightAllign(drivebase, driver1));
+      driver1.povLeft().whileTrue(s_vision.driveLeftAllign(drivebase, driver1));
 
       driver1.triangle().whileTrue(shooter.ShooterShootSpecific(-0.5));
       driver1.povUp().onTrue(new safeElevator(elevator, angleSubsystem, 3.26, 1.14));
