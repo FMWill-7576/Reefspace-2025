@@ -50,14 +50,11 @@ public class LedSubsystem extends SubsystemBase {
   private int Insidelenght = 74 + 48 + 2;
   private final Distance InsideSpace = Meters.of(1 / Insidelenght);
 
-
   private Elevator s_elevator;
   private VisionSubsystem s_vision;
   private ShooterSubsystem s_shooter;
 
-
-
-  public LedSubsystem(Elevator elev,ShooterSubsystem shooter, VisionSubsystem vision) {
+  public LedSubsystem(Elevator elev, ShooterSubsystem shooter, VisionSubsystem vision) {
     s_elevator = elev;
     s_shooter = shooter;
     s_vision = vision;
@@ -72,7 +69,6 @@ public class LedSubsystem extends SubsystemBase {
 
     insideLed.start();
 
-
     setLedBlank();
   }
 
@@ -81,11 +77,11 @@ public class LedSubsystem extends SubsystemBase {
     LEDPattern redTeam = LEDPattern.solid(Color.kDarkRed).breathe(Seconds.of(5)).atBrightness(Percent.of(50));
 
     Optional<Alliance> ally = DriverStation.getAlliance();
-    if(ally.get()==Alliance.Red){
+    if (ally.get() == Alliance.Red) {
       redTeam.applyTo(insideLed_buffer);
-    }else if(ally.get()==Alliance.Blue) {
+    } else if (ally.get() == Alliance.Blue) {
       blueTeam.applyTo(insideLed_buffer);
-    }else {
+    } else {
       LEDPattern pattern = LEDPattern.solid(Color.kAqua).blink(Seconds.of(3));
       pattern.applyTo(insideLed_buffer);
       insideLed.setData(insideLed_buffer);
@@ -98,9 +94,9 @@ public class LedSubsystem extends SubsystemBase {
     LEDPattern redTeam = LEDPattern.solid(Color.kDarkRed).atBrightness(Percent.of(50));
 
     Optional<Alliance> ally = DriverStation.getAlliance();
-    if(ally.get()==Alliance.Red){
+    if (ally.get() == Alliance.Red) {
       redTeam.applyTo(insideLed_buffer);
-    }else {
+    } else {
       blueTeam.applyTo(insideLed_buffer);
     }
     insideLed.setData(insideLed_buffer);
@@ -112,26 +108,27 @@ public class LedSubsystem extends SubsystemBase {
     insideLed.setData(insideLed_buffer);
   }
 
-  public void setCustomColor(Color color){
+  public void setCustomColor(Color color) {
     LEDPattern pattern = LEDPattern.solid(color);
     pattern.applyTo(insideLed_buffer);
     insideLed.setData(insideLed_buffer);
   }
 
   public void greenBlink() {
-    LEDPattern base = LEDPattern.solid(Color.kGreen).blink(Seconds.of(1));
+    LEDPattern base = LEDPattern.gradient(GradientType.kDiscontinuous, Color.kGreen, Color.kSlateBlue)
+        .breathe(Seconds.of(0.25));
     base.applyTo(insideLed_buffer);
     insideLed.setData(insideLed_buffer);
   }
 
-  public void greenFlash () {
+  public void greenFlash() {
     LEDPattern base = LEDPattern.solid(Color.kGreen).breathe(Seconds.of(0.25));
     base.applyTo(insideLed_buffer);
     insideLed.setData(insideLed_buffer);
   }
 
-  public void CoralLed() { 
-    LEDPattern pattern = LEDPattern.solid(Color.kSlateGray).blink(Seconds.of(0.25));
+  public void CoralLed() {
+    LEDPattern pattern = LEDPattern.solid(Color.kSlateGray).blink(Seconds.of(0.75));
     pattern.applyTo(insideLed_buffer);
     insideLed.setData(insideLed_buffer);
   }
@@ -141,30 +138,31 @@ public class LedSubsystem extends SubsystemBase {
     LEDPattern redTeam = LEDPattern.solid(Color.kDarkRed).blink(Seconds.of(0.5));
 
     Optional<Alliance> ally = DriverStation.getAlliance();
-    if(ally.get()==Alliance.Red){
+    if (ally.get() == Alliance.Red) {
       redTeam.applyTo(insideLed_buffer);
-    }else {
+    } else {
       blueTeam.applyTo(insideLed_buffer);
     }
     insideLed.setData(insideLed_buffer);
   }
 
   public Command LedCommand() {
-    return run(()->{
-      if(s_vision.CanShootVision()){
+    return run(() -> {
+      if (s_vision.CanShootVision()) {
         greenFlash();
-      }else if(s_shooter.IsCoral()){
+      } else if (s_vision.IsAprilTag()) {
+        greenBlink();
+      } else if (s_shooter.IsCoral()) {
         CoralLed();
-      }else{
+      } else {
         solidAllianceColor();
       }
     });
   }
 
-
   @Override
   public void periodic() {
-    if(DriverStation.isDisabled()) {
+    if (DriverStation.isDisabled()) {
       setAllianceColor();
     }
   }

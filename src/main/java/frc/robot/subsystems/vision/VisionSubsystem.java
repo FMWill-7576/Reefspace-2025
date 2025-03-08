@@ -48,14 +48,14 @@ public class VisionSubsystem extends SubsystemBase {
                 rotational_PID.calculate(
                         getHorizontalOffset(),
                         VisionConstants.leftHorizontalOffset),
-                -0.5, 0.5) * 1;
+                -1, 1) * 1;
 
         // Move forward
         double left_translationY_Axis = MathUtil.clamp(
                 rotational_PID.calculate(
                         getArea(),
                         VisionConstants.leftArea),
-                -0.5, 0.5) * 1;
+                -1, 1) * 1;
 
         return run(() -> drivebase.driveFieldOriented(
             SwerveInputStream.of(drivebase.getSwerveDrive(),
@@ -84,14 +84,14 @@ public class VisionSubsystem extends SubsystemBase {
                 rotational_PID.calculate(
                         getHorizontalOffset(),
                         VisionConstants.rightHorizontalOffset),
-                -0.5, 0.5) * 1;
+                -1, 1) * 1;
 
         // Move forward
         double right_translationY_Axis = MathUtil.clamp(
                 rotational_PID.calculate(
                         getArea(),
                         VisionConstants.rightArea),
-                -0.5, 0.5) * 1;
+                -1, 1) * 1;
 
         return run(() -> drivebase.driveFieldOriented(
             SwerveInputStream.of(drivebase.getSwerveDrive(),
@@ -110,28 +110,28 @@ public class VisionSubsystem extends SubsystemBase {
                 rotational_PID.calculate(
                         getHorizontalOffset(),
                         VisionConstants.leftHorizontalOffset),
-                -0.5, 0.5) * 1;
+                -1, 1) * 1;
 
         // Move forward
         double left_translationY_Axis = MathUtil.clamp(
                 rotational_PID.calculate(
                         getArea(),
                         VisionConstants.leftArea),
-                -0.5, 0.5) * 1;
+                -1, 1) * 1;
 
         // Make it parallel
         double right_rotationalAxis = MathUtil.clamp(
                 rotational_PID.calculate(
                         getHorizontalOffset(),
                         VisionConstants.rightHorizontalOffset),
-                -0.5, 0.5) * 1;
+                -1, 1) * 1;
 
         // Move forward
         double right_translationY_Axis = MathUtil.clamp(
                 rotational_PID.calculate(
                         getArea(),
                         VisionConstants.rightArea),
-                -0.5, 0.5) * 1;
+                -1, 1) * 1;
 
         return run(() -> {
             SmartDashboard.putNumber("right calculated translation", right_translationY_Axis);
