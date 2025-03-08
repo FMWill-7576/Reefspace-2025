@@ -14,13 +14,14 @@ public class VisionSubsystem extends SubsystemBase {
 
     String limelightName = "";
 
-    PIDController rotational_PID = new PIDController(0.05, 0, 0);
-    PIDController translationalY_PID = new PIDController(0.05, 0, 0);
+    PIDController rotational_PID = new PIDController(0.005, 0, 0);
+    PIDController translational_PID = new PIDController(0.01, 0, 0);
 
     public VisionSubsystem() {
         rotational_PID.setTolerance(VisionConstants.horizontalTolerance);
-        translationalY_PID.setTolerance(VisionConstants.areaTolerance);
+        translational_PID.setTolerance(VisionConstants.areaTolerance);
     }
+
 
     public boolean IsAprilTag() {
         return LimelightHelpers.getTV(limelightName);
@@ -29,6 +30,7 @@ public class VisionSubsystem extends SubsystemBase {
     public double getHorizontalOffset() {
         return LimelightHelpers.getTX(limelightName);
     }
+    
 
     /*
      * Use for distance
@@ -42,31 +44,6 @@ public class VisionSubsystem extends SubsystemBase {
         return (int) LimelightHelpers.getFiducialID(limelightName);
     }
 
-    public Command driveLeftAllign(SwerveSubsystem drivebase, CommandPS5Controller controller) {
-        // Make it parallel
-        double left_rotationalAxis = MathUtil.clamp(
-                rotational_PID.calculate(
-                        getHorizontalOffset(),
-                        VisionConstants.leftHorizontalOffset),
-                -1, 1) * 1;
-
-        // Move forward
-        double left_translationY_Axis = MathUtil.clamp(
-                rotational_PID.calculate(
-                        getArea(),
-                        VisionConstants.leftArea),
-                -1, 1) * 1;
-
-        return run(() -> drivebase.driveFieldOriented(
-            SwerveInputStream.of(drivebase.getSwerveDrive(),
-                () -> left_translationY_Axis,
-                () -> 0)
-                .withControllerRotationAxis(()->left_rotationalAxis)
-                .allianceRelativeControl(true)
-                )
-            );
-    }
-
     public boolean CanShootVision(){
         if(MathUtil.isNear(VisionConstants.leftArea, getArea(), VisionConstants.areaTolerance) && MathUtil.isNear(VisionConstants.leftHorizontalOffset, getArea(), VisionConstants.horizontalTolerance)){
             return true;
@@ -78,32 +55,78 @@ public class VisionSubsystem extends SubsystemBase {
         }
     }
 
-    public Command driveRightAllign(SwerveSubsystem drivebase, CommandPS5Controller controller) {
-        // Make it parallel
-        double right_rotationalAxis = MathUtil.clamp(
+    public double get_right_rotation(){
+        if(getArea()!=0 && getHorizontalOffset()!=0){
+            double val = MathUtil.clamp(
                 rotational_PID.calculate(
                         getHorizontalOffset(),
                         VisionConstants.rightHorizontalOffset),
                 -1, 1) * 1;
-
-        // Move forward
-        double right_translationY_Axis = MathUtil.clamp(
-                rotational_PID.calculate(
-                        getArea(),
-                        VisionConstants.rightArea),
-                -1, 1) * 1;
-
-        return run(() -> drivebase.driveFieldOriented(
-            SwerveInputStream.of(drivebase.getSwerveDrive(),
-                () -> right_translationY_Axis,
-                () -> 0)
-                .withControllerRotationAxis(()->right_rotationalAxis)
-                .allianceRelativeControl(true)
-                )
-            );
+            return val;
+        }
+        return 0;
     }
 
-    public Command logBothAllign() {
+    public double get_left_rotation(){
+        if(getArea()!=0 && getHorizontalOffset()!=0){
+            double val = MathUtil.clamp(
+            rotational_PID.calculate(
+                    getHorizontalOffset(),
+                    VisionConstants.leftHorizontalOffset),
+            -1, 1) * 1;
+        return val;
+        }
+        return 0;
+    }
+
+    public double get_left_translation(){
+        if(getArea()!=0 && getHorizontalOffset()!=0){
+            double val = MathUtil.clamp(
+            translational_PID.calculate(
+                    getArea(),
+                    VisionConstants.leftArea),
+            -1, 1) * 1;
+        return val;
+        }
+        return 0;
+    }
+
+
+
+    public double get_right_translation(){
+        if(getArea()!=0 && getHorizontalOffset()!=0){
+            double val = MathUtil.clamp(
+            translational_PID.calculate(
+                    getArea(),
+                    VisionConstants.rightArea),
+            -1, 1) * 1;
+        return val;
+        }
+        return 0;
+    }
+
+    public Command driveRightAllign(SwerveSubsystem drivebase, CommandPS5Controller controller) {
+        return drivebase.drive(
+            SwerveInputStream.of(drivebase.getSwerveDrive(),
+                () -> get_right_translation(),
+                () -> 0)
+                .withControllerRotationAxis(()->get_right_rotation())
+                .allianceRelativeControl(false)
+                .robotRelative(true)
+        );
+    }   
+    public Command driveLeftAllign(SwerveSubsystem drivebase, CommandPS5Controller controller) {
+        return drivebase.drive(
+            SwerveInputStream.of(drivebase.getSwerveDrive(),
+                () -> get_left_translation(),
+                () -> 0)
+                .withControllerRotationAxis(()->get_left_rotation())
+                .allianceRelativeControl(false)
+                .robotRelative(true)
+            );
+    }   
+
+    public void logBothAllign() {
 
         // Make it parallel
         double left_rotationalAxis = MathUtil.clamp(
@@ -133,12 +156,8 @@ public class VisionSubsystem extends SubsystemBase {
                         VisionConstants.rightArea),
                 -1, 1) * 1;
 
-        return run(() -> {
-            SmartDashboard.putNumber("right calculated translation", right_translationY_Axis);
-            SmartDashboard.putNumber("left calculated translation", left_translationY_Axis);
-            SmartDashboard.putNumber("left calculated rotation", left_rotationalAxis);
-            SmartDashboard.putNumber("right calculated rotation", right_rotationalAxis);
-        });
+        SmartDashboard.putNumber("left rot pid", left_rotationalAxis);
+        SmartDashboard.putNumber("left translation pid", left_translationY_Axis);
 
     }
 
@@ -151,5 +170,6 @@ public class VisionSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         log();
+        logBothAllign();
     }
 }

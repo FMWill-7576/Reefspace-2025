@@ -74,7 +74,7 @@ public class RobotContainer {
   final CommandXboxController driver2 = new CommandXboxController(1);
 
 
-  private final SwerveSubsystem drivebase = new SwerveSubsystem(
+  public final SwerveSubsystem drivebase = new SwerveSubsystem(
       new File(Filesystem.getDeployDirectory(), "swerve"));
 
   public final Elevator elevator = new Elevator();
@@ -100,11 +100,9 @@ public class RobotContainer {
  
 
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-      () -> driver1.getLeftY() * -1,
-      () -> driver1.getLeftX() * -1)
-      .withControllerRotationAxis(driver1::getRightX)
-      .scaleRotation(swerveYawSpeed)
-      .scaleTranslation(swerveSpeed)
+      () -> driver1.getLeftY() *-1 *swerveSpeed,
+      () -> driver1.getLeftX()*-1 *swerveSpeed)
+      .withControllerRotationAxis(()-> -driver1.getRightX() * swerveYawSpeed)
       .deadband(OperatorConstants.DEADBAND)
       .allianceRelativeControl(true);
 
@@ -320,8 +318,8 @@ public class RobotContainer {
       driver1.povDown().whileTrue(shooter.ShooterShootSpecific(0.1));
       driver1.povUp().whileTrue(shooter.ShooterShootSpecific(-0.1));
 
-      driver1.povRight().whileTrue(s_vision.driveRightAllign(drivebase, driver1));
-      driver1.povLeft().whileTrue(s_vision.driveLeftAllign(drivebase, driver1));
+      driver1.povRight().whileTrue(s_vision.driveRightAllign(drivebase, driver1).onlyIf(()->s_vision.IsAprilTag()));
+      driver1.povLeft().whileTrue(s_vision.driveLeftAllign(drivebase, driver1).onlyIf(()->s_vision.IsAprilTag()));
 
       driver1.triangle().whileTrue(shooter.ShooterShootSpecific(-0.5));
       driver1.povUp().onTrue(new safeElevator(elevator, angleSubsystem, 3.26, 1.14));
@@ -334,10 +332,6 @@ public class RobotContainer {
 
       driver1.L1()
       .onTrue(new setElevatorState(elevator,angleSubsystem,1));
-
-      driver1.cross().whileTrue(
-        s_vision.logBothAllign()
-      );
 
   
 
