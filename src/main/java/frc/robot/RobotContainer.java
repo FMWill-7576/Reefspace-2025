@@ -46,7 +46,6 @@ import frc.robot.subsystems.led.LedSubsystem;
 //import frc.robot.subsystems.elevator.ElevatorSubsystem;
 // garip hata import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
-import frc.robot.subsystems.swervedrive.Vision;
 import frc.robot.subsystems.vision.VisionSubsystem;
 
 import java.io.File;
@@ -335,6 +334,10 @@ public class RobotContainer {
 
       driver1.L1()
       .onTrue(new setElevatorState(elevator,angleSubsystem,1));
+
+      driver1.cross().whileTrue(
+        s_vision.logBothAllign()
+      );
 
   
 
