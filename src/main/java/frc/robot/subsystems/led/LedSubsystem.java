@@ -48,7 +48,7 @@ public class LedSubsystem extends SubsystemBase {
   private AddressableLEDBufferView insideLed_buffer_middle;
 
   private int Insidelenght = 74 + 48 + 2;
-  private final Distance InsideSpace = Meters.of(1 / Insidelenght);
+  private final Distance ledSpace = Meters.of(1 / 60);
 
   private Elevator s_elevator;
   private VisionSubsystem s_vision;
@@ -129,6 +129,16 @@ public class LedSubsystem extends SubsystemBase {
 
   public void CoralLed() {
     LEDPattern pattern = LEDPattern.solid(Color.kSlateGray).blink(Seconds.of(0.75));
+    pattern.applyTo(insideLed_buffer);
+    insideLed.setData(insideLed_buffer);
+  }
+
+  public void foxScroll() {
+    Map<Double,Color> maskSteps = Map.of(0.0,Color.kWhite,0.1,Color.kBlack);
+    LEDPattern green = LEDPattern.gradient(GradientType.kContinuous, Color.kBlack,Color.kGreen);
+    LEDPattern mask = LEDPattern.steps(maskSteps).scrollAtRelativeSpeed(Percent.per(Second).of(50));
+    LEDPattern pattern = green.mask(mask);
+
     pattern.applyTo(insideLed_buffer);
     insideLed.setData(insideLed_buffer);
   }

@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.Preferences;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.AlignToReefTagRelative;
 import frc.robot.commands.elevatorArm.algaeChaos;
 import frc.robot.commands.elevatorArm.algeaState;
 import frc.robot.commands.elevatorArm.runIntakeUntilCoral;
@@ -196,6 +197,7 @@ public class RobotContainer {
     autoChooser.addOption("go middle", drivebase.getAutonomousCommand("go middle"));
     autoChooser.addOption("middle l4", drivebase.getAutonomousCommand("middle4"));
     autoChooser.addOption("middle activity", drivebase.getAutonomousCommand("middle activity"));
+    autoChooser.addOption("bottom l2 max", drivebase.getAutonomousCommand("bottom l2 max"));
   
   
     if (listOfAutos != null) {
@@ -318,8 +320,8 @@ public class RobotContainer {
       driver1.povDown().whileTrue(shooter.ShooterShootSpecific(0.1));
       driver1.povUp().whileTrue(shooter.ShooterShootSpecific(-0.1));
 
-      driver1.povRight().whileTrue(s_vision.driveRightAllign(drivebase, driver1).onlyIf(()->s_vision.IsAprilTag()));
-      driver1.povLeft().whileTrue(s_vision.driveLeftAllign(drivebase, driver1).onlyIf(()->s_vision.IsAprilTag()));
+      driver1.povRight().whileTrue(new AlignToReefTagRelative(true, drivebase));
+      driver1.povLeft().whileTrue(new AlignToReefTagRelative(false, drivebase));
 
       driver1.triangle().whileTrue(shooter.ShooterShootSpecific(-0.5));
       driver1.povUp().onTrue(new safeElevator(elevator, angleSubsystem, 3.26, 1.14));

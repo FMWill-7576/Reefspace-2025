@@ -3,10 +3,12 @@
   "robotLength": 0.87,
   "holonomicMode": true,
   "pathFolders": [
-    "regional 2 practice",
-    "idk singles"
+    "l2 full",
+    "idk singles",
+    "regional 2 practice"
   ],
   "autoFolders": [
+    "bottom l2",
     "regional 2"
   ],
   "defaultMaxVel": 3.0,
