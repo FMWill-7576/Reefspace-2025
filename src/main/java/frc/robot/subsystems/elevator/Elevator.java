@@ -108,27 +108,6 @@ public class Elevator extends SubsystemBase {
     return setpoint;
   }
 
-  public void setIdleMode(IdleMode mode) {
-    mainConfig.idleMode(mode);
-
-  }
-
-  //State Holding
-  public Command StateUpCommand(){
-    if(currentIndex<ElevatorConstants.states.length-1){
-      currentIndex = currentIndex+1;
-    }
-    return this.run(()->setPosition(ElevatorConstants.states[currentIndex])).until(()->IsAtDesiredHeight(ElevatorConstants.states[currentIndex]));
-  }
-
-  public Command StateDownCommand(){
-    if(currentIndex>0){
-      currentIndex = currentIndex - 1;
-    }
-    return this.run(()->setPosition(ElevatorConstants.states[currentIndex])).until(()->IsAtDesiredHeight(ElevatorConstants.states[currentIndex]));
-  }
-
-
   public int getCurrentState() {
     double pos = boreEncoder.getPosition();
     if(MathUtil.isNear(ElevatorConstants.states[0], pos, 0.5)){
@@ -162,9 +141,6 @@ public class Elevator extends SubsystemBase {
 
   public Command manualDownCommand() {
     return run(() -> setpoint-=0.02);
-  }
-  public Command manualStopCommand() {
-    return run(() -> setpoint+=0.02);
   }
 
   public void elevHold() {
@@ -205,17 +181,6 @@ public class Elevator extends SubsystemBase {
 
   public void elevStop() {
     mainMotor.set(0.0);
-  }
-
-  public void elevVoltage(double voltage) {
-    mainMotor.setVoltage(voltage);
-  }
-
-  public int getCurrentIndex() {
-    return currentIndex;
-  }
-  public void setCurrentIndex(int n) {
-    currentIndex = n;
   }
 
   public void setupPreferences(){
